@@ -40,8 +40,42 @@
 </head>
 <body class="text-white min-h-screen">
 
+  <!-- ================= FIREBASE DATABASE CONFIG MODAL ================= -->
+  <div id="fb-config-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 hidden">
+    <div class="glass w-full max-w-md p-6 rounded-2xl border border-gaming-primary/30 shadow-lg">
+      <h3 class="font-gaming text-xl text-gaming-primary mb-2 text-center tracking-wide"><i class="fa-solid fa-fire text-orange-500 mr-2"></i>FIREBASE LINK SETUP</h3>
+      <p class="text-xs text-gaming-textMuted mb-4 text-center">To sync real-time database, enter your Web SDK details or close to keep operating offline.</p>
+      <div class="space-y-3 text-sm text-left">
+        <div>
+          <label class="block text-xs mb-1 text-gaming-textMuted">Database URL</label>
+          <input id="cfg-db-url" type="text" placeholder="https://your-db-rtdb.firebaseio.com" class="w-full bg-black/50 border border-white/10 rounded-lg p-2 focus:border-gaming-primary outline-none text-xs text-white">
+        </div>
+        <div>
+          <label class="block text-xs mb-1 text-gaming-textMuted">API Key</label>
+          <input id="cfg-api-key" type="password" placeholder="AIzaSy..." class="w-full bg-black/50 border border-white/10 rounded-lg p-2 focus:border-gaming-primary outline-none text-xs text-white">
+        </div>
+        <div>
+          <label class="block text-xs mb-1 text-gaming-textMuted">Project ID</label>
+          <input id="cfg-proj-id" type="text" placeholder="your-project-123" class="w-full bg-black/50 border border-white/10 rounded-lg p-1.5 focus:border-gaming-primary outline-none text-xs text-white">
+        </div>
+        <div>
+          <label class="block text-xs mb-1 text-gaming-textMuted">App ID</label>
+          <input id="cfg-app-id" type="text" placeholder="1:1234:web:abcd" class="w-full bg-black/50 border border-white/10 rounded-lg p-1.5 focus:border-gaming-primary outline-none text-xs text-white">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mt-5">
+        <button onclick="saveFirebaseConfig()" class="bg-gradient-to-r from-gaming-primary to-gaming-secondary py-2.5 rounded-xl font-semibold text-xs text-black active:scale-95 transition">SAVE & SYNC</button>
+        <button onclick="closeFbConfig()" class="bg-white/10 hover:bg-white/20 py-2.5 rounded-xl text-xs font-semibold active:scale-95 transition">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= ADMIN PIN AUTHORIZATION CARD ================= -->
-  <div id="admin-auth-screen" class="min-h-screen flex flex-col justify-center items-center px-4">
+  <div id="admin-auth-screen" class="min-h-screen flex flex-col justify-center items-center px-4 relative">
+    <div class="absolute top-4 right-4 z-10">
+      <button onclick="openFbConfig()" class="bg-gaming-card border border-white/10 px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 text-gaming-primary hover:neon-border transition"><i class="fa-solid fa-gear"></i> Setup DB</button>
+    </div>
+
     <div class="glass border border-white/10 w-full max-w-sm p-6 rounded-3xl text-center space-y-6 shadow-2xl">
       <div class="w-16 h-16 bg-gradient-to-tr from-gaming-primary to-gaming-secondary rounded-2xl mx-auto flex items-center justify-center text-black text-2xl shadow-lg border border-gaming-primary">
         <i class="fa-solid fa-laptop-code"></i>
@@ -72,6 +106,7 @@
         </div>
       </div>
       <div class="flex items-center gap-3">
+        <button onclick="openFbConfig()" class="bg-gaming-card border border-white/10 px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 text-gaming-primary hover:neon-border transition"><i class="fa-solid fa-gear"></i> Setup DB</button>
         <button onclick="logoutAdminPanel()" class="bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl text-[10px] uppercase font-bold text-gaming-textMuted flex items-center gap-1.5"><i class="fa-solid fa-right-from-bracket"></i> Quit Session</button>
       </div>
     </header>
@@ -437,6 +472,52 @@
     }
 
     // --- Database Sync Operations ---
+    function openFbConfig() {
+      const modal = document.getElementById('fb-config-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        const storedConfig = localStorage.getItem('FIREBASE_WATCH_AND_EARN_CONFIG');
+        if (storedConfig) {
+          try {
+            const cfg = JSON.parse(storedConfig);
+            document.getElementById('cfg-db-url').value = cfg.databaseURL || "";
+            document.getElementById('cfg-api-key').value = cfg.apiKey || "";
+            document.getElementById('cfg-proj-id').value = cfg.projectId || "";
+            document.getElementById('cfg-app-id').value = cfg.appId || "";
+          } catch (e) {}
+        }
+      }
+    }
+
+    function closeFbConfig() {
+      const modal = document.getElementById('fb-config-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function saveFirebaseConfig() {
+      const url = document.getElementById('cfg-db-url').value.trim();
+      const apiKey = document.getElementById('cfg-api-key').value.trim();
+      const projId = document.getElementById('cfg-proj-id').value.trim();
+      const appId = document.getElementById('cfg-app-id').value.trim();
+
+      if (!url || !apiKey || !projId || !appId) {
+        alert("Fill in all config parameters to link real Firebase!");
+        return;
+      }
+
+      const cfgObj = {
+        apiKey: apiKey,
+        authDomain: `${projId}.firebaseapp.com`,
+        databaseURL: url,
+        projectId: projId,
+        storageBucket: `${projId}.appspot.com`,
+        appId: appId
+      };
+
+      localStorage.setItem('FIREBASE_WATCH_AND_EARN_CONFIG', JSON.stringify(cfgObj));
+      location.reload();
+    }
+
     function initDatabaseSync() {
       let storedConfig = localStorage.getItem('FIREBASE_WATCH_AND_EARN_CONFIG');
       if (!storedConfig) {
@@ -481,18 +562,42 @@
 
     function syncWithFirebaseDatabase() {
       database.ref('settings').on('value', sn => {
-        siteSettings = sn.val() ? sn.val() : SETTINGS_DEMO;
+        const val = sn.val();
+        if (!val) {
+          // auto-initialize settings with SETTINGS_DEMO inside Firebase Realtime Database
+          database.ref('settings').set(SETTINGS_DEMO);
+          siteSettings = SETTINGS_DEMO;
+        } else {
+          siteSettings = val;
+        }
         renderSettingsConfigScreen();
       });
 
       database.ref('videos').on('value', sn => {
-        videosData = sn.val() ? sn.val() : {};
+        const val = sn.val();
+        if (!val) {
+          PLAYLIST_DEMO.forEach(v => {
+            database.ref('videos/' + v.id).set(v);
+          });
+          videosData = {};
+          PLAYLIST_DEMO.forEach(v => { videosData[v.id] = v; });
+        } else {
+          videosData = val;
+        }
         renderVideosMatrix();
         calculateDashboardOverview();
       });
 
       database.ref('banners').on('value', sn => {
-        bannersData = sn.val() ? Object.values(sn.val()) : BANNERS_DEMO;
+        const val = sn.val();
+        if (!val) {
+          BANNERS_DEMO.forEach(b => {
+            database.ref('banners/' + b.id).set(b);
+          });
+          bannersData = BANNERS_DEMO;
+        } else {
+          bannersData = Object.values(val);
+        }
         renderBannersList();
       });
 
@@ -694,7 +799,9 @@
           loadInitialDataViews();
         }
       } else {
-        database.ref('videos/' + id + '/active').set(!vid.active);
+        database.ref('videos/' + id + '/active').set(!vid.active)
+          .then(() => alert("Video active state toggled successfully!"))
+          .catch(err => alert("Error toggling video active state: " + err.message));
       }
     }
 
@@ -707,7 +814,9 @@
         localStorage.setItem('W&E_SANDBOX_VIDEOS', JSON.stringify(f));
         loadInitialDataViews();
       } else {
-        database.ref('videos/' + id).remove();
+        database.ref('videos/' + id).remove()
+          .then(() => alert("Video deleted successfully!"))
+          .catch(err => alert("Error deleting video: " + err.message));
       }
     }
 
@@ -841,13 +950,18 @@
           const txObj = sn.val();
           if (txObj) {
             const statusStr = approve ? 'approved' : 'rejected';
-            database.ref('withdrawals/' + txId + '/status').set(statusStr);
-            database.ref('withdrawals/' + txId + '/note').set(reason);
+            const updates = {};
+            updates['withdrawals/' + txId + '/status'] = statusStr;
+            updates['withdrawals/' + txId + '/note'] = reason;
 
             if (!approve) {
-              database.ref('users/' + txObj.uid + '/coins').set(firebase.database.ServerValue.increment(txObj.amount));
+              database.ref('users/' + txObj.uid + '/coins').set(firebase.database.ServerValue.increment(txObj.amount))
+                .catch(err => console.error("Could not refund player coins: ", err));
             }
-            alert(`Claim successfully completed and recorded.`);
+
+            database.ref().update(updates)
+              .then(() => alert(`Withdrawal claim successfully processed as ${statusStr.toUpperCase()}.`))
+              .catch(err => alert("Error updating withdrawal claim: " + err.message));
           }
         });
       }
@@ -921,7 +1035,9 @@
         localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(map));
         loadInitialDataViews();
       } else {
-        database.ref('users/' + uid + '/coins').set(parsed);
+        database.ref('users/' + uid + '/coins').set(parsed)
+          .then(() => alert(`Updated user coin balance successfully!`))
+          .catch(err => alert("Error updating coins: " + err.message));
       }
     }
 
@@ -938,7 +1054,9 @@
         localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(map));
         loadInitialDataViews();
       } else {
-        database.ref('users/' + uid + '/isBanned').set(!u.isBanned);
+        database.ref('users/' + uid + '/isBanned').set(!u.isBanned)
+          .then(() => alert(`User status toggled successfully!`))
+          .catch(err => alert("Error toggling status: " + err.message));
       }
     }
 
@@ -994,7 +1112,9 @@
           loadInitialDataViews();
         }
       } else {
-        database.ref('supportTickets/' + ticketId + '/reply').set(field);
+        database.ref('supportTickets/' + ticketId + '/reply').set(field)
+          .then(() => alert(`Reply sent successfully!`))
+          .catch(err => alert("Error sending reply: " + err.message));
       }
     }
 
@@ -1011,7 +1131,9 @@
           loadInitialDataViews();
         }
       } else {
-        database.ref('supportTickets/' + ticketId + '/status').set('resolved');
+        database.ref('supportTickets/' + ticketId + '/status').set('resolved')
+          .then(() => alert(`Ticket marked resolved successfully!`))
+          .catch(err => alert("Error resolving ticket: " + err.message));
       }
     }
 
@@ -1044,7 +1166,9 @@
         localStorage.setItem('W&E_SANDBOX_SETTINGS', JSON.stringify(siteSettings));
         loadInitialDataViews();
       } else {
-        database.ref('settings/maintenanceMode').set(!isMaint);
+        database.ref('settings/maintenanceMode').set(!isMaint)
+          .then(() => alert("System lock status updated!"))
+          .catch(err => alert("Error toggling system lock: " + err.message));
       }
     }
 
