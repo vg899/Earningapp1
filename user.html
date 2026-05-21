@@ -1488,9 +1488,26 @@
       if (pEmail) pEmail.textContent = currentUser.email || "Pilot Account";
 
       // Whatsapp / Telegram link generators
-      const shareMsg = `Join Watch & Earn Gaming Zone, complete video watch tasks, and withdraw instant cash prizes! Use my referral code: ${currentUser.referralCode} to get free coins instantly! Join at ${location.href}`;
+      const shareMsg = `🔥 Start Earning Real Rewards with CoinTube! 🎥💰
+
+Watch full videos, complete exciting tasks, earn free coins, and withdraw instant cash rewards directly to your account! 🚀
+
+🎁 Join now and get FREE bonus coins instantly using my referral code:
+
+💎 Referral Code: ${currentUser.referralCode || "WE-94370"}
+
+✅ Daily Bonuses
+✅ Video Watch Rewards
+✅ Lucky Spin & Gaming Rewards
+✅ Instant Cash Withdrawals
+✅ Premium Earning Experience
+
+🌐 Join Now:
+https://median.co/share/bnendly#ap
+
+⚡ Don’t miss your chance to start earning today with CoinTube!`;
       document.getElementById('share-whatsapp').href = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareMsg)}`;
-      document.getElementById('share-telegram').href = `https://t.me/share/url?url=${encodeURIComponent(location.href)}&text=${encodeURIComponent(shareMsg)}`;
+      document.getElementById('share-telegram').href = `https://t.me/share/url?url=${encodeURIComponent('https://median.co/share/bnendly#ap')}&text=${encodeURIComponent(shareMsg)}`;
 
       // Load items
       renderMissionsUI();
