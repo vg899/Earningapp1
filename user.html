@@ -134,7 +134,7 @@
     <header class="bg-gaming-dark/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-40 px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-2.5">
         <div id="u-avatar" class="w-10 h-10 rounded-full border border-gaming-primary/50 overflow-hidden relative" onclick="switchTab('profile')">
-          <img src="https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
+          <img id="header-avatar-img" src="https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
         </div>
         <div>
           <div class="flex items-center gap-1.5">
@@ -375,64 +375,364 @@
     </main>
 
     <!-- ================= TAB: PROFILE ================= -->
-    <main id="tab-profile" class="p-4 space-y-5 hidden">
-      <!-- User profile badge display card -->
-      <div class="bg-gaming-card p-4 rounded-2xl border border-white/5 flex gap-4 items-center">
-        <div class="w-14 h-14 rounded-full overflow-hidden border-2 border-gaming-primary shadow-lg shadow-gaming-primary/20">
-          <img id="profile-img" src="https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
-        </div>
-        <div>
-          <h2 class="font-gaming font-extrabold text-sm tracking-wide text-white" id="p-username">SuperGamer</h2>
-          <p class="text-[10px] text-gaming-textMuted mt-0.5" id="p-uid">UID: user_uid_demo</p>
-          <p class="text-[10px] text-gaming-primary mt-1 flex items-center gap-1"><i class="fa-solid fa-shield-halved"></i> Badge Certified: Level <span id="p-level">1</span></p>
-        </div>
-      </div>
-
-      <!-- Referral System Dashboard section -->
-      <div class="bg-gradient-to-r from-teal-950/20 via-gaming-card to-gaming-card p-4 rounded-2xl border border-gaming-primary/20 space-y-3 relative overflow-hidden bg-gaming-card">
-        <div class="absolute right-0 top-0 w-20 h-20 bg-gaming-primary/5 rounded-full blur-xl"></div>
-        <h3 class="font-gaming text-xs text-gaming-primary tracking-wide"><i class="fa-solid fa-users mr-1.5"></i> SHARE REFERRAL PIN</h3>
-        <p class="text-[10px] text-gaming-textMuted">Invite friends. You both instantly earn +100 Coins when they sign up under your personal code!</p>
-        
-        <div class="flex gap-2">
-          <input id="ref-code-display" type="text" readonly value="W&E-123" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-center font-gaming font-bold tracking-widest text-gaming-secondary outline-none">
-          <button onclick="copyReferralCode()" class="bg-gaming-card border border-gaming-primary/30 px-4 rounded-xl text-xs font-semibold text-gaming-primary active:scale-95 transition">COPY</button>
+    <main id="tab-profile" class="p-4 pb-24 hidden animate-fadeIn max-w-7xl mx-auto">
+      <!-- GAMER PERSONALIZATION WORKSTATION (AVATAR COZY CUSTOMIZER) -->
+      <div id="avatar-customizer-box" class="bg-gaming-card p-5 rounded-3xl border border-gaming-primary/30 space-y-4 mb-6 hidden shadow-2xl animate-fadeIn max-w-2xl mx-auto">
+        <div class="flex items-center justify-between border-b border-white/5 pb-3">
+          <h3 class="font-gaming text-xs text-gaming-primary tracking-widest uppercase flex items-center gap-1.5"><i class="fa-solid fa-user-gear animate-pulse"></i> PERSONALIZATION PORTAL</h3>
+          <button onclick="closeAvatarCustomizer()" class="text-xs text-gaming-textMuted hover:text-white transition"><i class="fa-solid fa-xmark text-sm"></i></button>
         </div>
         
-        <!-- Social shares -->
-        <div class="grid grid-cols-2 gap-2 mt-1 select-none">
-          <a id="share-whatsapp" href="#" target="_blank" class="bg-green-600/20 text-green-400 border border-green-500/30 py-2 rounded-xl text-center text-xs flex items-center justify-center gap-1.5"><i class="fa-brands fa-whatsapp text-lg"></i> WhatsApp</a>
-          <a id="share-telegram" href="#" target="_blank" class="bg-sky-600/20 text-sky-400 border border-sky-500/30 py-2 rounded-xl text-center text-xs flex items-center justify-center gap-1.5"><i class="fa-brands fa-telegram text-lg"></i> Telegram</a>
+        <div class="space-y-2">
+          <label class="text-[10px] font-gaming text-gaming-textMuted uppercase tracking-wider block">Gamer Handle (Display Name)</label>
+          <div class="relative">
+            <input id="edit-username-input" type="text" placeholder="Enter gaming nickname..." class="w-full bg-black/40 border border-white/10 focus:border-gaming-primary rounded-xl pl-4 pr-10 py-3 text-xs text-white outline-none transition font-semibold">
+            <i class="fa-solid fa-dice text-gaming-primary hover:text-white cursor-pointer absolute right-4 top-3.5 text-sm hover:rotate-12 transition-transform" title="Generate random gamer tag" onclick="generateRandomGamerTag()"></i>
+          </div>
         </div>
+
+        <div class="space-y-2">
+          <label class="text-[10px] font-gaming text-gaming-textMuted uppercase tracking-wider block">Select Cyber Legend Avatar Card</label>
+          <div class="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
+            <!-- Avatar choices items -->
+            <div onclick="selectAvatarItem('https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=200&auto=format&fit=crop', 0)" class="avatar-card-item w-full aspect-square rounded-xl overflow-hidden border-2 border-gaming-secondary cursor-pointer relative group transition-all duration-200">
+              <img src="https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
+              <div class="absolute inset-0 bg-gaming-secondary/20 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <i class="fa-solid fa-circle-check text-white"></i>
+              </div>
+            </div>
+            <div onclick="selectAvatarItem('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=200&auto=format&fit=crop', 1)" class="avatar-card-item w-full aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-white/20 cursor-pointer relative group transition-all duration-200">
+              <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
+            </div>
+            <div onclick="selectAvatarItem('https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=200&auto=format&fit=crop', 2)" class="avatar-card-item w-full aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-white/20 cursor-pointer relative group transition-all duration-200">
+              <img src="https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
+            </div>
+            <div onclick="selectAvatarItem('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=200&auto=format&fit=crop', 3)" class="avatar-card-item w-full aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-white/20 cursor-pointer relative group transition-all duration-200">
+              <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
+            </div>
+            <div onclick="selectAvatarItem('https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=200&auto=format&fit=crop', 4)" class="avatar-card-item w-full aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-white/20 cursor-pointer relative group transition-all duration-200">
+              <img src="https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
+            </div>
+            <div onclick="selectAvatarItem('https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=200&auto=format&fit=crop', 5)" class="avatar-card-item w-full aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-white/20 cursor-pointer relative group transition-all duration-200">
+              <img src="https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
+            </div>
+          </div>
+        </div>
+
+        <button onclick="commitProfileUpdates()" class="w-full py-3.5 bg-gradient-to-r from-gaming-primary to-gaming-secondary text-black font-gaming font-black text-xs rounded-xl shadow-lg shadow-gaming-primary/20 active:scale-95 transition">SAVE & UPDATE IDENTITY</button>
       </div>
 
-      <!-- Help support ticketer inside app -->
-      <div class="glass p-4 rounded-2xl border border-white/5 space-y-3">
-        <h3 class="font-gaming text-xs text-gaming-secondary tracking-wide"><i class="fa-solid fa-headset mr-1.5"></i> HELP & CUSTOMER TICKETS</h3>
-        <div class="space-y-3">
-          <textarea id="support-text" rows="2" placeholder="Describe deposit or watch timing claims error details..." class="w-full bg-black/40 border border-white/10 rounded-xl p-3 outline-none text-xs text-white focus:border-gaming-secondary transition"></textarea>
-          <button onclick="submitContactTicket()" class="w-full bg-gaming-card border border-gaming-secondary/40 py-2.5 rounded-xl text-xs font-semibold text-gaming-secondary active:scale-95 transition">SUBMIT COMPLAINT TICKET</button>
-        </div>
-        <div id="u-support-history" class="space-y-2 mt-3 pt-2 border-t border-white/5 max-h-32 overflow-y-auto">
-          <!-- Help entries rendered dynamically -->
-        </div>
-      </div>
+      <!-- TRIPLE GAMER PANEL VIEWPORT -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        
+        <!-- ================= PANEL 1: GAMER CORE IDENTITY & WALLET ================= -->
+        <div class="space-y-6">
+          
+          <!-- GAMER SHIELD HEADER (COSMIC PRESENTATION) -->
+          <div class="relative rounded-3xl overflow-hidden border border-white/10 bg-gaming-card/45 p-6 shadow-2xl flex flex-col items-center">
+            <!-- Decorative backdrop glow -->
+            <div class="absolute -top-12 w-48 h-48 bg-gradient-to-tr from-gaming-secondary via-transparent to-gaming-primary opacity-20 rounded-full blur-3xl"></div>
+            
+            <!-- Glowing Avatar Ring -->
+            <div class="relative w-28 h-28 flex items-center justify-center">
+              <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-gaming-primary via-gaming-neonPink to-gaming-secondary opacity-65 blur-md animate-pulse"></div>
+              <div class="relative w-24 h-24 rounded-full overflow-hidden border-2 border-gaming-secondary bg-[#07090f] shadow-2xl">
+                <img id="profile-img" src="https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
+              </div>
+              <!-- Quick access edit avatar trigger -->
+              <div onclick="openAvatarCustomizer()" class="absolute right-0.5 bottom-0.5 w-7 h-7 bg-[#05070c] rounded-full border border-gaming-primary/40 flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 active:scale-95 transition" title="Edit Avatar & Name">
+                <i class="fa-solid fa-pen text-gaming-primary text-[10px]"></i>
+              </div>
+            </div>
 
-      <!-- Legal Policies, T&C list links modal -->
-      <div class="bg-gaming-card p-4 rounded-2xl border border-white/5 space-y-3">
-        <h3 class="font-gaming text-xs text-gaming-primary tracking-wide"><i class="fa-solid fa-scale-balanced mr-1.5"></i> LEGAL & INFORMATION POLICIES</h3>
-        <div class="grid grid-cols-2 gap-2 text-xs">
-          <button onclick="openLegalPolicy('privacy')" class="bg-[#121824] py-3 rounded-lg text-left pl-3 text-gaming-textMuted active:scale-95 transition">Privacy Policy</button>
-          <button onclick="openLegalPolicy('terms')" class="bg-[#121824] py-3 rounded-lg text-left pl-3 text-gaming-textMuted active:scale-95 transition">Terms of Service</button>
-          <button onclick="openLegalPolicy('faq')" class="bg-[#121824] py-3 rounded-lg text-left pl-3 text-gaming-textMuted active:scale-95 transition">Help FAQs</button>
-          <button onclick="openLegalPolicy('copyright')" class="bg-[#121824] py-3 rounded-lg text-left pl-3 text-gaming-textMuted active:scale-95 transition">DMCA Guidelines</button>
+            <!-- Profile labels -->
+            <div class="text-center mt-5 w-full">
+              <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                <h2 class="font-gaming font-extrabold text-lg text-white tracking-wide" id="p-username">SuperGamer</h2>
+                <i class="fa-solid fa-circle-check text-gaming-secondary text-xs" title="Certified Verified Player"></i>
+                <span id="p-vip-pill" class="text-[8px] bg-gaming-neonPink/25 text-gaming-neonPink border border-gaming-neonPink/30 px-2 py-0.5 rounded-full font-bold uppercase hidden animate-pulse">VIP ELITE</span>
+              </div>
+              <p class="text-[10px] text-gaming-textMuted font-mono mt-1" id="p-uid">UID: user_uid_demo</p>
+              <p class="text-[9px] text-[#8b9bb4]/70 mt-1 flex items-center justify-center gap-1"><i class="fa-solid fa-calendar-alt text-gaming-secondary"></i> Member Since: <span id="p-joined-date">12 May 2026</span></p>
+              
+              <div class="flex justify-center gap-1.5 mt-2">
+                <span class="text-[10px] text-gaming-textMuted bg-[#121824] px-2.5 py-1 rounded-full border border-white/5 truncate max-w-[180px]" id="p-email-badge">email@example.com</span>
+              </div>
+
+              <!-- Action buttons to adjust profile -->
+              <button onclick="openAvatarCustomizer()" class="mt-4 px-5 py-2 bg-[#121824] hover:bg-gaming-primary/10 hover:text-gaming-primary border border-white/5 hover:border-gaming-primary/20 rounded-xl text-[10px] text-gaming-textMuted tracking-wider font-gaming font-semibold transition active:scale-95 flex items-center gap-1.5 mx-auto">
+                <i class="fa-solid fa-user-pen text-[10px]"></i> Edit Profile
+              </button>
+            </div>
+          </div>
+
+          <!-- LEVEL STATUS BOARD -->
+          <div class="bg-gaming-card p-5 rounded-3xl border border-white/5 shadow-xl relative overflow-hidden">
+            <div class="grid grid-cols-12 gap-4 items-center">
+              <!-- Big Badge Level -->
+              <div class="col-span-4 flex flex-col items-center justify-center border-r border-white/5 pr-2">
+                <div class="relative w-14 h-14 flex items-center justify-center">
+                  <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-gaming-primary to-gaming-secondary opacity-25 blur-sm"></div>
+                  <div class="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0c101d] to-[#161c30] border border-gaming-primary/30 flex flex-col items-center justify-center shadow-inner">
+                    <span class="text-[8px] text-gaming-textMuted font-semibold uppercase tracking-tighter block leading-none">LEVEL</span>
+                    <span class="font-gaming font-extrabold text-sm text-white mt-0.5 leading-none" id="p-level">1</span>
+                  </div>
+                </div>
+              </div>
+              <!-- ProgressBar & fractions -->
+              <div class="col-span-8 pl-1">
+                <div class="flex items-center justify-between text-[11px] mb-1.5">
+                  <span class="text-gaming-textMuted font-bold">XP Progress</span>
+                  <span class="font-mono text-gaming-primary font-bold" id="p-xp-fraction">340 / 1000 XP</span>
+                </div>
+                <!-- Linear progress gauge -->
+                <div class="w-full bg-[#07090f]/80 h-2.5 rounded-full overflow-hidden border border-white/5">
+                  <div id="p-xp-bar" class="bg-gradient-to-r from-gaming-primary to-gaming-secondary h-full rounded-full transition-all duration-700" style="width: 34%"></div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Global rank or Streak layout info footer -->
+            <div class="flex justify-between items-center mt-4 pt-3 border-t border-white/5 text-[10px] text-gaming-textMuted font-bold">
+              <span class="flex items-center gap-1"><i class="fa-solid fa-globe text-gaming-secondary animate-pulse"></i> Global Rank: <span class="text-white font-gaming">#1,234</span></span>
+              <span class="flex items-center gap-1"><i class="fa-solid fa-fire text-gaming-neonPink animate-bounce"></i> <span id="p-gamer-streak-day" class="text-white font-gaming">1</span>-day streak</span>
+            </div>
+          </div>
+
+          <!-- WALLET DASHBOARD (TREASURY CARD) -->
+          <div class="bg-[#0f131f] p-5 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden backdrop-blur-md">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-gaming-primary/5 rounded-full blur-2xl"></div>
+            
+            <p class="text-[10px] text-gaming-textMuted font-gaming tracking-widest uppercase">Wallet Dashboard</p>
+            
+            <!-- Total Coins banner with currency formatting -->
+            <div class="flex justify-between items-center mt-3 pb-3 mb-4 border-b border-white/5">
+              <div>
+                <p class="text-[9px] uppercase tracking-wider text-[#8b9bb4]">Total Ledger Coins</p>
+                <h4 class="font-gaming font-extrabold text-2xl text-white mt-1 tracking-wide" id="p-gamer-coins-display">0</h4>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-gaming-neonGold/10 border border-gaming-neonGold/20 flex items-center justify-center select-none shadow">
+                <i class="fa-solid fa-coins text-gaming-neonGold text-xl animate-pulse"></i>
+              </div>
+            </div>
+
+            <!-- Bento subdivisions grid -->
+            <div class="grid grid-cols-2 gap-3">
+              <!-- Withdrawable coins -->
+              <div class="bg-[#07090f]/60 p-3 rounded-2xl border border-white/5 space-y-1">
+                <p class="text-[8px] text-gaming-textMuted uppercase font-bold tracking-wider">Withdrawable</p>
+                <div class="font-gaming font-black text-xs text-white"><span id="p-wallet-withdrawable-text">0</span> CT</div>
+                <div class="text-[9px] text-gaming-neonGreen font-semibold flex items-center gap-0.5 mt-0.5">
+                  <i class="fa-solid fa-wallet text-[8px]"></i> $<span id="p-wallet-withdrawable-usd">0.00</span>
+                </div>
+              </div>
+
+              <!-- Total Withdrawn coins -->
+              <div class="bg-[#07090f]/60 p-3 rounded-2xl border border-white/5 space-y-1">
+                <p class="text-[8px] text-gaming-textMuted uppercase font-bold tracking-wider">Withdrawn</p>
+                <div class="font-gaming font-black text-xs text-white"><span id="p-wallet-withdrawn-text">0</span> CT</div>
+                <div class="text-[9px] text-[#8b9bb4] font-semibold mt-0.5 flex items-center gap-0.5">
+                  <i class="fa-solid fa-lock-open text-[8px] text-gaming-secondary"></i> Redeemed
+                </div>
+              </div>
+
+              <!-- Lifetime accumulated coins -->
+              <div class="bg-[#07090f]/60 p-3 rounded-2xl border border-white/5 space-y-1">
+                <p class="text-[8px] text-gaming-textMuted uppercase font-bold tracking-wider">Lifetime Earnings</p>
+                <div class="font-gaming font-black text-xs text-[#10b981]"><span id="p-gamer-lifetime">500</span> CT</div>
+                <div class="text-[9px] text-[#10b981] font-bold mt-0.5">
+                  Accumulated Loot
+                </div>
+              </div>
+
+              <!-- Pending Vault security audits -->
+              <div class="bg-[#07090f]/60 p-3 rounded-2xl border border-white/5 space-y-1">
+                <p class="text-[8px] text-gaming-textMuted uppercase font-bold tracking-wider">Pending Audit</p>
+                <div class="font-gaming font-black text-xs text-gaming-neonGold"><span id="p-wallet-pending-text">0</span> CT</div>
+                <div class="text-[9px] text-gaming-neonGold/80 font-semibold mt-0.5 flex items-center gap-0.5">
+                  <i class="fa-solid fa-triangle-exclamation text-[8px] animate-pulse"></i> Security check
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
+
+        <!-- ================= PANEL 2: VIDEO STATISTICS, INVITE CODE & MEDALS ================= -->
+        <div class="space-y-6">
+
+          <!-- CAMPAIGNS & GAMING PERFORMANCE METRICS -->
+          <div class="bg-gaming-card p-5 rounded-3xl border border-white/5 shadow-2xl space-y-4">
+            <h3 class="font-gaming text-xs text-gaming-secondary tracking-widest uppercase flex items-center gap-1.5"><i class="fa-solid fa-chart-line text-[11px] animate-pulse"></i> CAMPAIGN PERFORMANCE</h3>
+            
+            <div class="grid grid-cols-2 gap-3.5">
+              <!-- Video campaigns finished tag -->
+              <div onclick="switchTab('videos')" class="bg-[#07090f]/60 p-3.5 rounded-2xl border border-white/5 relative group cursor-pointer hover:border-gaming-secondary/30 transition">
+                <p class="text-[8px] text-[#8b9bb4] uppercase tracking-wider font-bold">Videos Watched</p>
+                <h4 class="font-gaming font-extrabold text-sm text-white mt-1" id="p-gamer-videos-watched">0</h4>
+                <div class="text-[9px] text-[#22d3ee] font-bold mt-1 flex items-center gap-0.5"><i class="fa-solid fa-play"></i> Stream Live</div>
+              </div>
+              <!-- Level streak counter -->
+              <div class="bg-[#07090f]/60 p-3.5 rounded-2xl border border-white/5">
+                <p class="text-[8px] text-[#8b9bb4] uppercase tracking-wider font-bold">Streak Bonus</p>
+                <h4 class="font-gaming font-extrabold text-sm text-gaming-neonGold mt-1"><span id="p-gamer-streak">1</span>-Day</h4>
+                <div class="text-[9px] text-gaming-neonGold font-bold mt-1 flex items-center gap-0.5"><i class="fa-solid fa-calendar-check"></i> Hot Multiplier</div>
+              </div>
+            </div>
+
+            <!-- Gamers achievement medals grid -->
+            <div class="pt-2">
+              <p class="text-[10px] text-gaming-textMuted font-gaming uppercase tracking-widest mb-2.5">PLAYER ACCOMPLISHMENTS</p>
+              <div class="grid grid-cols-4 gap-2">
+                <div class="flex flex-col items-center p-2 rounded-xl bg-gradient-to-b from-white/[0.02] to-transparent border border-white/5 relative group cursor-help">
+                  <div class="w-8 h-8 rounded-lg bg-gaming-secondary/10 flex items-center justify-center border border-gaming-secondary/20 text-gaming-secondary text-sm shadow">
+                    <i class="fa-solid fa-passport"></i>
+                  </div>
+                  <span class="text-[8px] text-white/90 font-bold mt-1.5 truncate max-w-full text-center">Verify</span>
+                  <!-- Tooltip -->
+                  <div class="absolute bottom-full mb-2 hidden group-hover:block bg-[#07090f] border border-white/10 text-[9px] text-[#8b9bb4] p-2 rounded shadow-xl z-20 w-28 text-center pointer-events-none">Certifiably Verified Player account.</div>
+                </div>
+                <div class="flex flex-col items-center p-2 rounded-xl bg-gradient-to-b from-white/[0.02] to-transparent border border-white/5 relative group cursor-help">
+                  <div class="w-8 h-8 rounded-lg bg-gaming-neonPink/10 flex items-center justify-center border border-gaming-neonPink/20 text-gaming-neonPink text-sm shadow">
+                    <i class="fa-solid fa-crown"></i>
+                  </div>
+                  <span class="text-[8px] text-white/90 font-bold mt-1.5 truncate max-w-full text-center">Elite</span>
+                  <!-- Tooltip -->
+                  <div class="absolute bottom-full mb-2 hidden group-hover:block bg-[#07090f] border border-white/10 text-[9px] text-[#8b9bb4] p-2 rounded shadow-xl z-20 w-28 text-center pointer-events-none">Granted once you unlock VIP Elite membership.</div>
+                </div>
+                <div class="flex flex-col items-center p-2 rounded-xl bg-gradient-to-b from-white/[0.02] to-transparent border border-white/5 relative group cursor-help">
+                  <div class="w-8 h-8 rounded-lg bg-gaming-neonGold/10 flex items-center justify-center border border-gaming-neonGold/20 text-gaming-neonGold text-sm shadow">
+                    <i class="fa-solid fa-sack-dollar"></i>
+                  </div>
+                  <span class="text-[8px] text-white/90 font-bold mt-1.5 truncate max-w-full text-center">Sack</span>
+                  <!-- Tooltip -->
+                  <div class="absolute bottom-full mb-2 hidden group-hover:block bg-[#07090f] border border-white/10 text-[9px] text-[#8b9bb4] p-2 rounded shadow-xl z-20 w-28 text-center pointer-events-none">Accumulated more than 5,000 lifetime Coins.</div>
+                </div>
+                <div class="flex flex-col items-center p-2 rounded-xl bg-gradient-to-b from-white/[0.02] to-transparent border border-white/5 relative group cursor-help">
+                  <div class="w-8 h-8 rounded-lg bg-gaming-neonGreen/10 flex items-center justify-center border border-gaming-neonGreen/20 text-gaming-neonGreen text-sm shadow animate-pulse">
+                    <i class="fa-solid fa-rocket"></i>
+                  </div>
+                  <span class="text-[8px] text-white/90 font-bold mt-1.5 truncate max-w-full text-center">Pioneer</span>
+                  <!-- Tooltip -->
+                  <div class="absolute bottom-full mb-2 hidden group-hover:block bg-[#07090f] border border-white/10 text-[9px] text-[#8b9bb4] p-2 rounded shadow-xl z-20 w-28 text-center pointer-events-none">Recognized first wave playtest crew.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SOCIAL GUILD & REFERRAL PIN STATION -->
+          <div class="bg-gradient-to-r from-teal-950/10 via-gaming-card to-gaming-card p-5 rounded-3xl border border-gaming-primary/20 space-y-4 relative overflow-hidden">
+            <div class="absolute right-0 top-0 w-20 h-20 bg-gaming-primary/5 rounded-full blur-xl"></div>
+            
+            <div class="flex items-center justify-between">
+              <h3 class="font-gaming text-xs text-gaming-primary tracking-widest uppercase flex items-center gap-1.5"><i class="fa-solid fa-users mr-1"></i> SHARE REFERRAL PIN</h3>
+              <span class="text-[9px] bg-gaming-primary/10 border border-gaming-primary/30 text-gaming-primary rounded-full px-2.5 py-0.5 font-bold uppercase tracking-wider">+100 GIFT</span>
+            </div>
+            
+            <p class="text-[10px] text-gaming-textMuted leading-relaxed">Invite other gamers & streamline rewards. You both instantly receive a certified bonus bundle of <span class="text-white font-bold">+100 Coins</span> right away when they sign up with your personal pin!</p>
+            
+            <div class="flex gap-2.5">
+              <input id="ref-code-display" type="text" readonly value="W&E-123" class="w-full bg-black/40 border border-white/10 rounded-xl p-3.5 text-xs text-center font-gaming font-bold tracking-widest text-gaming-secondary outline-none select-all relative z-10">
+              <button onclick="copyReferralCode()" class="bg-gaming-card hover:bg-gaming-primary/10 border border-gaming-primary/30 px-5 rounded-xl text-xs font-gaming font-bold text-gaming-primary active:scale-95 transition relative z-10 flex items-center justify-center gap-1">COPY</button>
+            </div>
+            
+            <!-- Telegram and Whatsapp sharing links -->
+            <div class="grid grid-cols-2 gap-2 mt-2 select-none font-bold relative z-10">
+              <a id="share-whatsapp" href="#" target="_blank" class="bg-green-600/15 text-green-400 hover:bg-green-600/25 border border-green-500/25 py-3 rounded-xl text-center text-[11px] flex items-center justify-center gap-1.5 transition"><i class="fa-brands fa-whatsapp text-sm text-green-400"></i> WhatsApp</a>
+              <a id="share-telegram" href="#" target="_blank" class="bg-sky-600/15 text-sky-400 hover:bg-sky-600/25 border border-sky-500/25 py-3 rounded-xl text-center text-[11px] flex items-center justify-center gap-1.5 transition"><i class="fa-brands fa-telegram text-sm text-sky-400"></i> Telegram</a>
+            </div>
+          </div>
+
+          <!-- VIP ELITE GUILD MEMBERSHIP TERMINAL -->
+          <div id="vip-terminal-box" class="bg-gradient-to-r from-red-950/20 via-gaming-card to-gaming-card p-5 rounded-3xl border border-gaming-neonPink/25 space-y-4 relative overflow-hidden shadow-2xl">
+            <div class="absolute right-0 top-0 w-24 h-24 bg-gaming-neonPink/5 rounded-full blur-2xl"></div>
+            
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-gaming-neonPink/15 flex items-center justify-center border border-gaming-neonPink/30 text-gaming-neonPink text-base animate-pulse">
+                <i class="fa-solid fa-crown"></i>
+              </div>
+              <div>
+                <h3 class="font-gaming text-xs text-white tracking-widest uppercase">VIP Elite Guild Station</h3>
+                <p class="text-[10px] text-gaming-textMuted mt-0.5" id="vip-status-desc">Acquire premium multiplier token boosts</p>
+              </div>
+            </div>
+
+            <div id="vip-locked-section" class="bg-[#0b0f19] p-3.5 rounded-2xl border border-white/5 space-y-3">
+              <div class="grid grid-cols-2 gap-2 text-[9px] text-[#8b9bb4]">
+                <div class="flex items-center gap-1.5"><i class="fa-solid fa-square-check text-gaming-neonGreen"></i> Claim Double Bonus</div>
+                <div class="flex items-center gap-1.5"><i class="fa-solid fa-square-check text-gaming-neonGreen"></i> Golden Handle Tag</div>
+                <div class="flex items-center gap-1.5"><i class="fa-solid fa-square-check text-gaming-neonGreen"></i> Fast Claim Payout</div>
+                <div class="flex items-center gap-1.5"><i class="fa-solid fa-square-check text-gaming-neonGreen"></i> High XP Boost</div>
+              </div>
+              <button onclick="upgradeToVipMembership()" class="w-full py-3 bg-gradient-to-r from-gaming-neonPink to-pink-600 hover:brightness-110 text-white font-gaming font-extrabold text-[9px] tracking-wider rounded-xl active:scale-95 transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-crown text-xs"></i> UNLOCK VIP ELITE (2,500 Coins)
+              </button>
+            </div>
+
+            <div id="vip-unlocked-section" class="bg-[#0b0f19]/70 p-3.5 rounded-2xl border border-gaming-neonGreen/20 text-center space-y-1.5 hidden animate-fadeIn">
+              <div class="text-gaming-neonGreen font-gaming text-xs tracking-wider flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-medal animate-bounce"></i> VIP TIER STATUS ACTIVE
+              </div>
+              <p class="text-[10px] text-[#8b9bb4]">Enjoy double coin multipliers and instant dashboard withdrawals.</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================= PANEL 3: HELPDESK & COIN TRANSACTION LEDGER ================= -->
+        <div class="space-y-6">
+
+          <!-- HELPDESK & APPRENTICE SERVICE TICKETS -->
+          <div class="bg-gaming-card p-5 rounded-3xl border border-white/5 space-y-4 shadow-xl">
+            <h3 class="font-gaming text-xs text-gaming-secondary tracking-widest uppercase flex items-center gap-1.5"><i class="fa-solid fa-headset mr-0.5 animate-pulse"></i> INQUIRY & HELPDESK</h3>
+            <p class="text-[10px] text-gaming-textMuted leading-relaxed">Experiencing payout drops, claims delay, or UPI setup issues? Open an live service ticket to report immediately.</p>
+            <div class="space-y-3">
+              <textarea id="support-text" rows="2" placeholder="Describe deposit, withdrawal pin or watch timing claims error details..." class="w-full bg-black/40 border border-white/10 rounded-xl p-3 outline-none text-xs text-white focus:border-gaming-secondary transition focus:ring-1 focus:ring-gaming-secondary/30 text-[11px] font-semibold"></textarea>
+              <button onclick="submitContactTicket()" class="w-full bg-[#111827] hover:bg-[#161f33] border border-gaming-secondary/30 hover:border-gaming-secondary py-3 rounded-xl text-xs font-gaming font-bold text-gaming-secondary active:scale-95 transition">SUBMIT INQUIRY TICKET</button>
+            </div>
+            
+            <div id="u-support-history" class="space-y-2 mt-3 pt-3 border-t border-white/5 max-h-48 overflow-y-auto">
+              <!-- support updates here -->
+            </div>
+          </div>
+
+          <!-- DYNAMIC live TRANSACTION LEDGER (WITHDRAWAL LOG HISTORY) -->
+          <div class="bg-gaming-card p-5 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden flex flex-col">
+            <div class="flex items-center justify-between pb-3.5 mb-3 border-b border-white/5">
+              <h3 class="font-gaming text-xs text-white tracking-widest uppercase flex items-center gap-1.5"><i class="fa-solid fa-receipt text-gaming-primary animate-pulse"></i> LIVE COIN LEDGER</h3>
+              <span class="text-[8px] tracking-widest bg-gaming-primary/10 text-gaming-primary border border-gaming-primary/20 px-2 py-0.5 rounded-full font-bold uppercase">HISTORY</span>
+            </div>
+
+            <!-- Ledger Scroll window -->
+            <div class="space-y-2 max-h-56 overflow-y-auto pr-1" id="tx-log-list">
+              <!-- Dynamic records added by renderWithdrawLogsHistory() -->
+              <div class="flex flex-col items-center justify-center p-6 text-center text-gaming-textMuted bg-black/20 rounded-2xl border border-white/[0.02]">
+                <i class="fa-solid fa-box-open text-lg mb-2 text-gaming-primary/45"></i>
+                <p class="text-[10px] uppercase tracking-widest font-bold">No previous transfers</p>
+                <p class="text-[9px] mt-0.5 opacity-60">Initiate a transfer to see history</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- LEGAL STATIONS & INFORMATION STATUTES -->
+          <div class="bg-gaming-card p-5 rounded-3xl border border-white/5 space-y-3.5">
+            <h3 class="font-gaming text-xs text-gaming-primary tracking-widest uppercase flex items-center gap-1.5"><i class="fa-solid fa-scale-balanced text-[11px]"></i> INFORMATION POLICIES</h3>
+            <div class="grid grid-cols-2 gap-2 text-[10px] font-bold">
+              <button onclick="openLegalPolicy('privacy')" class="bg-[#121824] hover:bg-gaming-primary/5 hover:text-gaming-primary border border-white/[0.03] py-3 rounded-lg text-left pl-3 text-gaming-textMuted active:scale-95 transition flex items-center gap-1.5"><i class="fa-solid fa-user-shield text-[10px] text-gaming-primary"></i> Privacy</button>
+              <button onclick="openLegalPolicy('terms')" class="bg-[#121824] hover:bg-gaming-primary/5 hover:text-gaming-primary border border-white/[0.03] py-3 rounded-lg text-left pl-3 text-gaming-textMuted active:scale-95 transition flex items-center gap-1.5"><i class="fa-solid fa-file-contract text-[10px] text-gaming-primary"></i> Terms</button>
+              <button onclick="openLegalPolicy('faq')" class="bg-[#121824] hover:bg-gaming-primary/5 hover:text-gaming-primary border border-white/[0.03] py-3 rounded-lg text-left pl-3 text-gaming-textMuted active:scale-95 transition flex items-center gap-1.5"><i class="fa-solid fa-circle-question text-[10px] text-gaming-primary"></i> Help FAQs</button>
+              <button onclick="openLegalPolicy('copyright')" class="bg-[#121824] hover:bg-[#22d3ee]/5 hover:text-gaming-secondary border border-white/[0.03] py-3 rounded-lg text-left pl-3 text-gaming-textMuted active:scale-95 transition flex items-center gap-1.5"><i class="fa-solid fa-copyright text-[10px] text-gaming-secondary"></i> DMCA</button>
+            </div>
+          </div>
+
+        </div>
+
       </div>
 
       <!-- Log out & Account deletion buttons controls -->
-      <div class="flex flex-col gap-2 pt-2">
-        <button onclick="logoutSession()" class="w-full py-3.5 bg-white/5 text-xs font-semibold rounded-xl text-gaming-textMuted active:scale-95 border border-white/5 transition"><i class="fa-solid fa-right-from-bracket mr-2"></i>SIGN OUT PILOT ACCOUNT</button>
-        <button onclick="triggerAccountDelete()" class="w-full py-3 bg-red-900/10 text-xs font-semibold rounded-xl text-red-400 active:scale-95 border border-red-500/20 transition"><i class="fa-solid fa-trash-can mr-2 text-red-500"></i>DELETE ENTIRE ACCOUNT</button>
+      <div class="flex flex-col sm:flex-row gap-3 pt-6 mt-6 border-t border-white/5 max-w-2xl mx-auto">
+        <button onclick="logoutSession()" class="flex-1 py-4 bg-white/5 hover:bg-white/10 hover:text-white text-xs font-gaming font-extrabold tracking-widest rounded-xl text-[#8b9bb4] active:scale-95 border border-white/5 transition flex items-center justify-center gap-1.5"><i class="fa-solid fa-right-from-bracket text-gaming-primary text-sm"></i> SIGN OUT PILOT ACCOUNT</button>
+        <button onclick="triggerAccountDelete()" class="flex-1 py-4 bg-red-950/10 hover:bg-red-950/20 text-xs font-gaming font-extrabold tracking-widest rounded-xl text-red-400 active:scale-95 border border-red-500/10 transition flex items-center justify-center gap-1.5"><i class="fa-solid fa-trash-can text-red-500 text-sm"></i> DELETE ENTIRE ACCOUNT</button>
       </div>
     </main>
 
@@ -742,6 +1042,29 @@
             }
           });
         } else {
+          // Automatic login using cached credentials if user has registered or logged in previously
+          const savedCredsStr = localStorage.getItem('W&E_SAVED_USER_CREDENTIALS');
+          if (savedCredsStr) {
+            try {
+              const saved = JSON.parse(savedCredsStr);
+              if (saved && saved.email && saved.password) {
+                console.log("Found cached credentials, attempting silent automatic login...");
+                auth.signInWithEmailAndPassword(saved.email, saved.password)
+                  .then(() => {
+                    console.log("Automatic login succeeded!");
+                  })
+                  .catch(err => {
+                    console.error("Automatic login failed:", err.message);
+                    localStorage.removeItem('W&E_SAVED_USER_CREDENTIALS');
+                    currentUser = null;
+                    showAuthScreen();
+                  });
+                return;
+              }
+            } catch (e) {
+              localStorage.removeItem('W&E_SAVED_USER_CREDENTIALS');
+            }
+          }
           currentUser = null;
           showAuthScreen();
         }
@@ -945,6 +1268,7 @@
       } else {
         auth.signInWithEmailAndPassword(email, password)
           .then(() => {
+            localStorage.setItem('W&E_SAVED_USER_CREDENTIALS', JSON.stringify({ email: email, password: password }));
             setLoginLoading(false);
           })
           .catch(err => {
@@ -1024,6 +1348,7 @@
               });
             }
 
+            localStorage.setItem('W&E_SAVED_USER_CREDENTIALS', JSON.stringify({ email: email, password: pwd }));
             database.ref('users/' + cred.user.uid).set(refDetails).then(() => {
               setRegisterLoading(false);
             });
@@ -1036,6 +1361,7 @@
     }
 
     function logoutSession() {
+      localStorage.removeItem('W&E_SAVED_USER_CREDENTIALS');
       if (isOfflineSandbox) {
         localStorage.removeItem('W&E_ACTIVE_USER_SESSION');
         currentUser = null;
@@ -1065,6 +1391,21 @@
       document.getElementById('u-coins-conversion').textContent = `${currencySymbol} ${convEst}`;
       document.getElementById('wall-conversion-val').textContent = `Est value: ${currencySymbol} ${convEst}`;
 
+      // Sync Profile 3-panel dynamic wallet cards
+      const profCoinsDisplay = document.getElementById('p-gamer-coins-display');
+      if (profCoinsDisplay) profCoinsDisplay.textContent = coins;
+      const profWithdrawableCoins = document.getElementById('p-wallet-withdrawable-text');
+      if (profWithdrawableCoins) profWithdrawableCoins.textContent = coins;
+      const profWithdrawableVal = document.getElementById('p-wallet-withdrawable-usd');
+      if (profWithdrawableVal) profWithdrawableVal.textContent = `${currencySymbol} ${convEst}`;
+
+      // Set user avatar image to the header and primary profile image (with Unsplash fallback tag presets)
+      const userAvatar = currentUser.avatarUrl || "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=200&auto=format&fit=crop";
+      const headerAvatar = document.getElementById('header-avatar-img');
+      if (headerAvatar) headerAvatar.src = userAvatar;
+      const profileImg = document.getElementById('profile-img');
+      if (profileImg) profileImg.src = userAvatar;
+
       // home states
       document.getElementById('u-today-earn').textContent = `${currentUser.todayEarnings || 0} Coins`;
       document.getElementById('u-lifetime-earn').textContent = `${currentUser.lifetimeEarnings || 0} Coins`;
@@ -1078,6 +1419,40 @@
       const pCent = Math.min((xp / targetXp) * 100, 100);
       document.getElementById('xp-bar').style.width = pCent + '%';
 
+      // profile tab xp indicator gauges
+      const profXpFraction = document.getElementById('p-xp-fraction');
+      if (profXpFraction) profXpFraction.textContent = `${xp} / ${targetXp} XP`;
+      const profXpBar = document.getElementById('p-xp-bar');
+      if (profXpBar) profXpBar.style.width = pCent + '%';
+
+      // profile high energy stats grid count updating
+      const pGamerBalance = document.getElementById('p-gamer-balance');
+      if (pGamerBalance) pGamerBalance.textContent = coins;
+      const pGamerLifetime = document.getElementById('p-gamer-lifetime');
+      if (pGamerLifetime) pGamerLifetime.textContent = currentUser.lifetimeEarnings || 500;
+      const pGamerWatched = document.getElementById('p-gamer-videos-watched');
+      if (pGamerWatched) pGamerWatched.textContent = Object.keys(currentUser.watchedVideos || {}).length;
+      const pGamerStreak = document.getElementById('p-gamer-streak');
+      if (pGamerStreak) pGamerStreak.textContent = currentUser.streakCount || 1;
+
+      // vip pill toggling 
+      const pVipPill = document.getElementById('p-vip-pill');
+      const vipStatusDesc = document.getElementById('vip-status-desc');
+      const vipLockedSec = document.getElementById('vip-locked-section');
+      const vipUnlockedSec = document.getElementById('vip-unlocked-section');
+
+      if (currentUser.vipStatus) {
+        if (pVipPill) pVipPill.classList.remove('hidden');
+        if (vipStatusDesc) vipStatusDesc.textContent = "VIP Elite Guild Active Member";
+        if (vipLockedSec) vipLockedSec.classList.add('hidden');
+        if (vipUnlockedSec) vipUnlockedSec.classList.remove('hidden');
+      } else {
+        if (pVipPill) pVipPill.classList.add('hidden');
+        if (vipStatusDesc) vipStatusDesc.textContent = "Acquire premium multiplier token boosts";
+        if (vipLockedSec) vipLockedSec.classList.remove('hidden');
+        if (vipUnlockedSec) vipUnlockedSec.classList.add('hidden');
+      }
+
       // daily check in checks
       const lastClaim = currentUser.lastDailyClaim || 0;
       const elapsed = Date.now() - lastClaim;
@@ -1089,9 +1464,9 @@
         document.getElementById('daily-claim-desc').textContent = "Next reward available shortly!";
       } else {
         document.getElementById('btn-daily-claim').disabled = false;
-        document.getElementById('btn-daily-claim').textContent = `CLAIM 150`;
+        document.getElementById('btn-daily-claim').textContent = `CLAIM ${currentUser.vipStatus ? 300 : 150}`;
         document.getElementById('btn-daily-claim').className = "bg-gradient-to-r from-gaming-neonPink to-pink-500 font-bold px-4 py-2.5 rounded-xl text-xs text-white uppercase shadow-neonPink/20 active:scale-95 transition";
-        document.getElementById('daily-claim-desc').textContent = "Claim free daily coin bonus reward";
+        document.getElementById('daily-claim-desc').textContent = currentUser.vipStatus ? "Claim free VIP daily double bonus (300 Coins)" : "Claim free daily coin bonus reward";
       }
 
       // VIP display
@@ -1106,6 +1481,11 @@
       document.getElementById('p-uid').textContent = "UID: " + currentUser.uid;
       document.getElementById('p-level').textContent = currentUser.level || 1;
       document.getElementById('ref-code-display').value = currentUser.referralCode || "";
+
+      const pJoined = document.getElementById('p-joined-date');
+      if (pJoined) pJoined.textContent = "Joined: " + (currentUser.joinedDate || "12 May 2026");
+      const pEmail = document.getElementById('p-email-badge');
+      if (pEmail) pEmail.textContent = currentUser.email || "Pilot Account";
 
       // Whatsapp / Telegram link generators
       const shareMsg = `Join Watch & Earn Gaming Zone, complete video watch tasks, and withdraw instant cash prizes! Use my referral code: ${currentUser.referralCode} to get free coins instantly! Join at ${location.href}`;
@@ -1124,11 +1504,162 @@
       const tabIds = ['home', 'videos', 'rewards', 'wallet', 'profile'];
       tabIds.forEach(id => {
         document.getElementById(`tab-${id}`).classList.add('hidden');
-        document.getElementById(`tab-btn-${id}`).className = "flex flex-col items-center gap-1.5 text-gaming-textMuted hover:text-white";
+        const tabBtn = document.getElementById(`tab-btn-${id}`);
+        if (tabBtn) {
+          tabBtn.className = "flex flex-col items-center gap-1.5 text-gaming-textMuted hover:text-white";
+        }
       });
 
       document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-      document.getElementById(`tab-btn-${tabId}`).className = "flex flex-col items-center gap-1.5 text-gaming-primary";
+      const actBtn = document.getElementById(`tab-btn-${tabId}`);
+      if (actBtn) {
+        actBtn.className = "flex flex-col items-center gap-1.5 text-gaming-primary";
+      }
+    }
+
+    // --- Customizable Avatar & VIP status Upgrade Mechanics ---
+    let tempSelectedAvatarUrl = "";
+
+    function openAvatarCustomizer() {
+      const box = document.getElementById('avatar-customizer-box');
+      if (!box) return;
+      box.classList.remove('hidden');
+      document.getElementById('edit-username-input').value = currentUser.username;
+      tempSelectedAvatarUrl = currentUser.avatarUrl || "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=200&auto=format&fit=crop";
+      
+      highlightSelectedAvatarInGrid(tempSelectedAvatarUrl);
+      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function closeAvatarCustomizer() {
+      const box = document.getElementById('avatar-customizer-box');
+      if (box) box.classList.add('hidden');
+    }
+
+    const AVATAR_PRESETS = [
+      "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=200&auto=format&fit=crop"
+    ];
+
+    function selectAvatarItem(url, index) {
+      tempSelectedAvatarUrl = url;
+      highlightSelectedAvatarInGrid(url);
+    }
+
+    function highlightSelectedAvatarInGrid(url) {
+      const cards = document.getElementsByClassName('avatar-card-item');
+      for (let i = 0; i < cards.length; i++) {
+        const img = cards[i].querySelector('img');
+        if (img && (img.src === url || (img.src.includes('unsplash.com') && url.includes(img.src.split('?')[0])))) {
+          cards[i].className = "avatar-card-item w-full aspect-square rounded-xl overflow-hidden border-2 border-gaming-secondary cursor-pointer relative group transition-all duration-200 ring-4 ring-gaming-secondary/30";
+          cards[i].innerHTML = `
+            <img src="${url}" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gaming-secondary/20 flex items-center justify-center">
+              <i class="fa-solid fa-circle-check text-white text-lg"></i>
+            </div>
+          `;
+        } else {
+          const originalPreset = AVATAR_PRESETS[i];
+          cards[i].className = "avatar-card-item w-full aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-white/20 cursor-pointer relative group transition-all duration-200";
+          cards[i].innerHTML = `
+            <img src="${originalPreset}" class="w-full h-full object-cover">
+          `;
+        }
+      }
+    }
+
+    function generateRandomGamerTag() {
+      const prefixes = ["Alpha", "Cyborg", "Shadow", "Delta", "Pixel", "Viper", "Omega", "Hyper", "Apex", "Nova"];
+      const suffixes = ["Slayer", "Knight", "Rider", "Trigger", "Glitch", "Pulse", "Warden", "Specter", "Reaper", "Asura"];
+      const randomPref = prefixes[Math.floor(Math.random() * prefixes.length)];
+      const randomSuff = suffixes[Math.floor(Math.random() * suffixes.length)];
+      const number = Math.floor(10 + Math.random() * 90);
+      const input = document.getElementById('edit-username-input');
+      if (input) input.value = `${randomPref}${randomSuff}${number}`;
+    }
+
+    function commitProfileUpdates() {
+      const newName = document.getElementById('edit-username-input').value.trim();
+      if (!newName) {
+        alert("Handle name can't be blank!");
+        return;
+      }
+
+      if (isOfflineSandbox) {
+        const uMap = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
+        const uNode = uMap[currentUser.uid];
+        uNode.username = newName;
+        uNode.avatarUrl = tempSelectedAvatarUrl;
+        localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(uMap));
+        currentUser = uNode;
+        syncUILayout();
+        alert("Gamer Profile updated successfully!");
+        closeAvatarCustomizer();
+      } else {
+        // Firebase Realtime database sync updates
+        Promise.all([
+          database.ref('users/' + currentUser.uid + '/username').set(newName),
+          database.ref('users/' + currentUser.uid + '/avatarUrl').set(tempSelectedAvatarUrl)
+        ]).then(() => {
+          currentUser.username = newName;
+          currentUser.avatarUrl = tempSelectedAvatarUrl;
+          syncUILayout();
+          alert("Gamer Profile synchronized with live server database successfully!");
+          closeAvatarCustomizer();
+        }).catch(err => {
+          alert("Database synchronization failed: " + err.message);
+        });
+      }
+    }
+
+    function upgradeToVipMembership() {
+      const cost = 2500;
+      if (currentUser.vipStatus) {
+        alert("You are already certified as a VIP Elite operator!");
+        return;
+      }
+      if (currentUser.coins < cost) {
+        alert(`Insufficient coins ledger! You need at least ${cost} coins to activate Elite Tier status.`);
+        return;
+      }
+
+      if (confirm(`Authorize spend of ${cost} Coins to upgrade to VIP Elite Status?`)) {
+        if (isOfflineSandbox) {
+          const uMap = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
+          const uNode = uMap[currentUser.uid];
+          uNode.coins -= cost;
+          uNode.vipStatus = true;
+          localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(uMap));
+          currentUser = uNode;
+          syncUILayout();
+          triggerJackpotCoinsShower();
+          alert("🎉 CONGRATULATIONS! You have successfully upgraded to VIP Elite Status! Double Daily rewards now permanently unlocked.");
+        } else {
+          // Firebase balance deduction & VIP upgrade transaction or direct update
+          database.ref('users/' + currentUser.uid).transaction(data => {
+            if (data) {
+              if ((data.coins || 0) >= cost) {
+                data.coins -= cost;
+                data.vipStatus = true;
+              }
+            }
+            return data;
+          }, (err, state, snap) => {
+            if (!err && state) {
+              currentUser = snap.val();
+              syncUILayout();
+              triggerJackpotCoinsShower();
+              alert("🎉 CONGRATULATIONS! You are now a verified VIP Elite Member!");
+            } else {
+              alert("Transaction upgrade failed: " + (err ? err.message : 'Insufficient Balance'));
+            }
+          });
+        }
+      }
     }
 
     // --- Dynamic Slider Banners Rendering ---
@@ -1360,7 +1891,8 @@
     // --- Daily Bonus Claim Handler ---
     function claimDailyBonus() {
       if (!currentUser) return;
-      const reward = 150;
+      const isVipValue = currentUser.vipStatus || false;
+      const reward = isVipValue ? 300 : 150;
 
       if (isOfflineSandbox) {
         const uMap = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
@@ -1377,14 +1909,17 @@
           if (data) {
             const now = Date.now();
             if (now - (data.lastDailyClaim || 0) >= 86400000) {
-              data.coins = (data.coins || 0) + reward;
-              data.lifetimeEarnings = (data.lifetimeEarnings || 0) + reward;
+              const currentReward = data.vipStatus ? 300 : 150;
+              data.coins = (data.coins || 0) + currentReward;
+              data.lifetimeEarnings = (data.lifetimeEarnings || 0) + currentReward;
               data.lastDailyClaim = now;
             }
           }
           return data;
         }, (err, state, snap) => {
           if (!err && state) {
+            currentUser = snap.val();
+            syncUILayout();
             triggerJackpotCoinsShower();
           }
         });
@@ -1904,39 +2439,67 @@
 
     function renderWithdrawLogsHistory() {
       const list = document.getElementById('tx-log-list');
+      if (!list) return;
       list.innerHTML = "";
 
-      let myTx = [];
-      if (isOfflineSandbox) {
-        const full = JSON.parse(localStorage.getItem('W&E_SANDBOX_WITHDRAWALS'));
-        myTx = full.filter(t => t.uid === currentUser.uid);
-      }
+      const renderTx = (myTx) => {
+        myTx.sort((a,b) => b.timestamp - a.timestamp);
 
-      // Sort chronological descending
-      myTx.sort((a,b) => b.timestamp - a.timestamp);
+        if (myTx.length === 0) {
+          list.innerHTML = `
+            <div class="flex flex-col items-center justify-center p-6 text-center text-gaming-textMuted bg-black/20 rounded-2xl border border-white/[0.02]">
+              <i class="fa-solid fa-box-open text-lg mb-2 text-gaming-primary/45"></i>
+              <p class="text-[10px] uppercase tracking-widest font-bold">No previous transfers</p>
+              <p class="text-[9px] mt-0.5 opacity-60">Initiate a transfer to see history</p>
+            </div>`;
+          return;
+        }
 
-      if (myTx.length === 0) {
-        list.innerHTML = `<p class="text-xs text-gaming-textMuted py-4 text-center">No withdraw logs found under profile yet.</p>`;
-        return;
-      }
+        list.innerHTML = "";
+        myTx.forEach(tx => {
+          const colorMap = { pending: 'text-gaming-neonGold bg-gaming-neonGold/10 border-gaming-neonGold/30', approved: 'text-gaming-neonGreen bg-gaming-neonGreen/10 border-gaming-neonGreen/30', rejected: 'text-gaming-neonPink bg-gaming-[#ff007f]/10 border-gaming-[#ff007f]/30' };
+          
+          const row = document.createElement('div');
+          row.className = "bg-[#0b0f19] p-3 rounded-xl border border-white/5 flex items-center justify-between text-xs";
+          row.innerHTML = `
+            <div>
+              <div class="font-semibold text-white/90">${tx.upiId || tx.upi || 'UPI Direct'}</div>
+              <div class="text-[9px] text-[#8b9bb4]/80 mt-1">${new Date(tx.timestamp).toLocaleString()}</div>
+            </div>
+            <div class="text-right">
+              <span class="font-gaming font-bold text-gaming-neonGold block">${tx.amount} Coins</span>
+              <span class="text-[8px] tracking-wider uppercase px-1.5 py-0.5 rounded border inline-block mt-1 font-extrabold ${colorMap[tx.status] || 'text-[#8b9bb4] bg-white/5'}">${tx.status || 'pending'}</span>
+            </div>
+          `;
+          list.appendChild(row);
+        });
 
-      myTx.forEach(tx => {
-        const colorMap = { pending: 'text-gaming-neonGold bg-gaming-neonGold/10 border-gaming-neonGold/30', approved: 'text-gaming-neonGreen bg-gaming-neonGreen/10 border-gaming-neonGreen/30', rejected: 'text-gaming-neonPink bg-gaming-[#ff007f]/10 border-gaming-[#ff007f]/30' };
+        // Sum up metrics for the dynamic dashboard wallet card!
+        const approvedSum = myTx.filter(t => t.status === 'approved').reduce((acc, curr) => acc + Number(curr.amount), 0);
+        const pendingSum = myTx.filter(t => t.status === 'pending').reduce((acc, curr) => acc + Number(curr.amount), 0);
         
-        const row = document.createElement('div');
-        row.className = "bg-gaming-card p-3 rounded-xl border border-white/5 flex items-center justify-between text-xs";
-        row.innerHTML = `
-          <div>
-            <div class="font-semibold text-white/90">${tx.upiId}</div>
-            <div class="text-[9px] text-gaming-textMuted mt-1">${new Date(tx.timestamp).toLocaleString()}</div>
-          </div>
-          <div class="text-right">
-            <span class="font-gaming font-bold text-gaming-neonGold block">${tx.amount} Coins</span>
-            <span class="text-[9px] uppercase px-1.5 py-0.5 rounded border inline-block mt-1 font-extrabold ${colorMap[tx.status]}">${tx.status}</span>
-          </div>
-        `;
-        list.appendChild(row);
-      });
+        const walletWithdrawnNode = document.getElementById('p-wallet-withdrawn-text');
+        if (walletWithdrawnNode) walletWithdrawnNode.textContent = approvedSum;
+        const walletPendingNode = document.getElementById('p-wallet-pending-text');
+        if (walletPendingNode) walletPendingNode.textContent = pendingSum;
+      };
+
+      if (isOfflineSandbox) {
+        let myTx = [];
+        const full = JSON.parse(localStorage.getItem('W&E_SANDBOX_WITHDRAWALS') || "[]");
+        myTx = full.filter(t => t.uid === currentUser.uid);
+        renderTx(myTx);
+      } else {
+        database.ref('withdrawals').orderByChild('uid').equalTo(currentUser.uid).once('value', sn => {
+          let myTx = [];
+          if (sn.exists()) {
+            sn.forEach(chi => {
+              myTx.push(chi.val());
+            });
+          }
+          renderTx(myTx);
+        });
+      }
     }
 
     // --- User Help Tickets Log Module ---
@@ -1959,7 +2522,7 @@
       };
 
       if (isOfflineSandbox) {
-        const currentTickets = JSON.parse(localStorage.getItem('W&E_SANDBOX_TICKETS'));
+        const currentTickets = JSON.parse(localStorage.getItem('W&E_SANDBOX_TICKETS') || "[]");
         currentTickets.push(ticketPayload);
         localStorage.setItem('W&E_SANDBOX_TICKETS', JSON.stringify(currentTickets));
         alert("Platform support ticket sent to active desk queue!");
@@ -1974,34 +2537,49 @@
 
     function renderContactSupportLogs() {
       const cont = document.getElementById('u-support-history');
+      if (!cont) return;
       cont.innerHTML = "";
 
-      let myTickets = [];
+      const renderTickets = (myTickets) => {
+        myTickets.sort((a,b) => b.timestamp - a.timestamp);
+
+        if (myTickets.length === 0) {
+          cont.innerHTML = `<p class="text-[10px] text-gaming-textMuted py-2 text-center">Empty tickets ledger folder.</p>`;
+          return;
+        }
+
+        cont.innerHTML = "";
+        myTickets.forEach(t => {
+          const card = document.createElement('div');
+          card.className = "bg-black/30 p-2.5 rounded-lg border border-white/5 space-y-1.5 text-[10px]";
+          card.innerHTML = `
+            <div class="flex justify-between text-[9px] text-gaming-textMuted border-b border-white/5 pb-1">
+              <span>Ticket: ${t.id}</span>
+              <span class="font-bold text-gaming-secondary uppercase">${t.status}</span>
+            </div>
+            <p class="text-white/80"><span class="font-bold text-gaming-primary">Me:</span> ${t.message}</p>
+            <p class="text-gaming-neonGold italic"><span class="font-bold text-gaming-primary block">Admin:</span> ${t.reply}</p>
+          `;
+          cont.appendChild(card);
+        });
+      };
+
       if (isOfflineSandbox) {
-        const items = JSON.parse(localStorage.getItem('W&E_SANDBOX_TICKETS'));
+        let myTickets = [];
+        const items = JSON.parse(localStorage.getItem('W&E_SANDBOX_TICKETS') || "[]");
         myTickets = items.filter(t => t.uid === currentUser.uid);
+        renderTickets(myTickets);
+      } else {
+        database.ref('supportTickets').orderByChild('uid').equalTo(currentUser.uid).once('value', sn => {
+          let myTickets = [];
+          if (sn.exists()) {
+            sn.forEach(chi => {
+              myTickets.push(chi.val());
+            });
+          }
+          renderTickets(myTickets);
+        });
       }
-
-      myTickets.sort((a,b) => b.timestamp - a.timestamp);
-
-      if (myTickets.length === 0) {
-        cont.innerHTML = `<p class="text-[10px] text-gaming-textMuted py-2 text-center">Empty tickets ledger folder.</p>`;
-        return;
-      }
-
-      myTickets.forEach(t => {
-        const card = document.createElement('div');
-        card.className = "bg-black/30 p-2.5 rounded-lg border border-white/5 space-y-1.5 text-[10px]";
-        card.innerHTML = `
-          <div class="flex justify-between text-[9px] text-gaming-textMuted border-b border-white/5 pb-1">
-            <span>Ticket: ${t.id}</span>
-            <span class="font-bold text-gaming-secondary uppercase">${t.status}</span>
-          </div>
-          <p class="text-white/80"><span class="font-bold text-gaming-primary">Me:</span> ${t.message}</p>
-          <p class="text-gaming-neonGold italic"><span class="font-bold text-gaming-primary block">Admin:</span> ${t.reply}</p>
-        `;
-        cont.appendChild(card);
-      });
     }
 
     // --- In-App Legal Policies Dialog Open Actions ---
