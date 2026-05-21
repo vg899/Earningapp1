@@ -12,6 +12,7 @@
   <!-- Tailwind CSS & JS Scripts -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -136,6 +137,9 @@
         </button>
         <button onclick="switchAdminSection('settings')" id="nav-btn-settings" class="w-full py-3.5 px-4 bg-gaming-card hover:bg-[#121824] border border-white/5 text-gaming-textMuted hover:text-white rounded-xl text-left font-gaming font-semibold text-xs flex items-center gap-2.5 transition">
           <i class="fa-solid fa-sliders text-sm"></i> Platform Parameters
+        </button>
+        <button onclick="switchAdminSection('audit_logs')" id="nav-btn-audit_logs" class="w-full py-3.5 px-4 bg-gaming-card hover:bg-[#121824] border border-white/5 text-gaming-textMuted hover:text-white rounded-xl text-left font-gaming font-semibold text-xs flex items-center gap-2.5 transition">
+          <i class="fa-solid fa-shield-halved text-sm text-gaming-neonGreen"></i> Security Audit Logs
         </button>
       </aside>
 
@@ -401,6 +405,37 @@
           </div>
         </section>
 
+        <!-- ================= CONTAINER: SECURITY AUDIT LOGS ================= -->
+        <section id="section-audit_logs" class="space-y-6 hidden">
+          <div class="bg-gaming-card p-5 rounded-2xl border border-white/5 space-y-4 shadow-xl">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-3">
+              <div>
+                <h3 class="font-gaming text-xs text-gaming-primary tracking-wide"><i class="fa-solid fa-shield-halved text-gaming-neonGreen"></i> SECURITY AUDIT LOGS</h3>
+                <p class="text-[10px] text-gaming-textMuted mt-1">Logs of admin login attempts, successful credentials verification, and client hardware information.</p>
+              </div>
+              <button onclick="clearAuditLogs()" class="bg-gaming-neonPink/20 text-gaming-neonPink hover:bg-gaming-neonPink/30 border border-gaming-neonPink/35 px-4 py-2 rounded-xl text-[10px] uppercase font-bold flex items-center gap-1.5 transition active:scale-95">
+                <i class="fa-solid fa-trash-can"></i> Flush All Logs
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-gaming-textMuted">
+                <thead class="bg-black/40 text-gaming-secondary font-gaming border-b border-white/5">
+                  <tr>
+                    <th class="p-3">Time & Date</th>
+                    <th class="p-3">Audit Details</th>
+                    <th class="p-3">Status</th>
+                    <th class="p-3">Device & Client Stats</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-audit-rows">
+                  <!-- dynamic lists -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
       </main>
     </div>
   </div>
@@ -417,6 +452,7 @@
     let usersData = {};
     let siteSettings = {};
     let supportTicketsData = [];
+    let adminLoginAttemptsData = [];
 
     // Analytics Dashboard line chart holder instance
     let analyticsChartInstance = null;
@@ -451,19 +487,71 @@
     });
 
     // --- Dynamic Pin Authorize ---
-    function authorizeAdminPIN() {
-      const pin = document.getElementById('admin-pin-field').value.trim();
-      const storedConfig = localStorage.getItem('FIREBASE_WATCH_AND_EARN_CONFIG');
-      
-      // Pin check (either DB sync has custom pin or defaults value '1234' matches)
-      if (pin === "1234") {
-        document.getElementById('admin-auth-screen').classList.add('hidden');
-        document.getElementById('admin-app-screen').classList.remove('hidden');
-        // complete components loads
-        loadInitialDataViews();
+    function logAdminAttempt(pin, isSuccess) {
+      const logAttempt = {
+        timestamp: new Date().toISOString(),
+        clientTime: new Date().toLocaleString(),
+        enteredPin: pin,
+        status: isSuccess ? "SUCCESS" : "FAILED",
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        details: isSuccess ? "Admin authenticated successfully." : `Failed login attempt with PIN: ${pin}`
+      };
+
+      if (isOfflineSandbox || !database) {
+        const logs = JSON.parse(localStorage.getItem('W&E_SANDBOX_AUDIT_LOGS')) || [];
+        logs.unshift(logAttempt);
+        localStorage.setItem('W&E_SANDBOX_AUDIT_LOGS', JSON.stringify(logs));
+        adminLoginAttemptsData = logs;
+        if (typeof renderAuditLogs === 'function') renderAuditLogs();
+        return Promise.resolve();
       } else {
-        alert("Unauthorized administrator access code! Try again.");
+        return database.ref('adminLoginAttempts').push(logAttempt)
+          .catch(err => console.error("Database logging failed:", err));
       }
+    }
+
+    function logAdminAction(actionType, details, badgeStatus = "INFO") {
+      const auditLog = {
+        timestamp: new Date().toISOString(),
+        clientTime: new Date().toLocaleString(),
+        enteredPin: "",
+        status: badgeStatus,
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        details: `${actionType}: ${details}`
+      };
+
+      if (isOfflineSandbox || !database) {
+        const logs = JSON.parse(localStorage.getItem('W&E_SANDBOX_AUDIT_LOGS')) || [];
+        logs.unshift(auditLog);
+        localStorage.setItem('W&E_SANDBOX_AUDIT_LOGS', JSON.stringify(logs));
+        adminLoginAttemptsData = logs;
+        if (typeof renderAuditLogs === 'function') renderAuditLogs();
+        return Promise.resolve();
+      } else {
+        return database.ref('adminLoginAttempts').push(auditLog)
+          .catch(err => console.error("Database action logging failed:", err));
+      }
+    }
+
+    function authorizeAdminPIN() {
+      const pinField = document.getElementById('admin-pin-field');
+      const pin = pinField.value.trim();
+      const isSuccess = (pin === "1234");
+      
+      // we log the admin login attempt
+      logAdminAttempt(pin, isSuccess).then(() => {
+        if (isSuccess) {
+          document.getElementById('admin-auth-screen').classList.add('hidden');
+          document.getElementById('admin-app-screen').classList.remove('hidden');
+          // complete components loads
+          loadInitialDataViews();
+        } else {
+          alert("Unauthorized administrator access code! Try again.");
+          if (pinField) pinField.value = "";
+        }
+      });
     }
 
     function logoutAdminPanel() {
@@ -520,16 +608,29 @@
 
     function initDatabaseSync() {
       let storedConfig = localStorage.getItem('FIREBASE_WATCH_AND_EARN_CONFIG');
+      if (storedConfig) {
+        try {
+          const cfg = JSON.parse(storedConfig);
+          if (cfg.projectId !== "cointube-220ad") {
+            localStorage.removeItem('FIREBASE_WATCH_AND_EARN_CONFIG');
+            storedConfig = null;
+          }
+        } catch (e) {
+          localStorage.removeItem('FIREBASE_WATCH_AND_EARN_CONFIG');
+          storedConfig = null;
+        }
+      }
+
       if (!storedConfig) {
         const defaultFirebaseConfig = {
-          apiKey: "AIzaSyCSgInnq7TAHouOLDm_OWLV5eiCYdDOViw",
-          authDomain: "earning-f0702.firebaseapp.com",
-          databaseURL: "https://earning-f0702-default-rtdb.firebaseio.com",
-          projectId: "earning-f0702",
-          storageBucket: "earning-f0702.firebasestorage.app",
-          messagingSenderId: "237104042249",
-          appId: "1:237104042249:web:7dd97c33d31b4a9e8b83d8",
-          measurementId: "G-Y9201J7Q15"
+          apiKey: "AIzaSyAOO7nJ6laFdz-vX9hN2xr0DQcfYZSPI_U",
+          authDomain: "cointube-220ad.firebaseapp.com",
+          databaseURL: "https://cointube-220ad-default-rtdb.firebaseio.com",
+          projectId: "cointube-220ad",
+          storageBucket: "cointube-220ad.firebasestorage.app",
+          messagingSenderId: "798441175337",
+          appId: "1:798441175337:web:cb41ba704f75ea5f94df38",
+          measurementId: "G-0WPB5C73TJ"
         };
         localStorage.setItem('FIREBASE_WATCH_AND_EARN_CONFIG', JSON.stringify(defaultFirebaseConfig));
         storedConfig = JSON.stringify(defaultFirebaseConfig);
@@ -543,6 +644,18 @@
               firebase.initializeApp(cfg);
             }
             database = firebase.database();
+            
+            // Sign in anonymously to guarantee we have write access under authenticated-only security rules
+            if (firebase.auth) {
+              firebase.auth().signInAnonymously()
+                .then(() => {
+                  console.log("Authenticated anonymously with Firebase Auth.");
+                })
+                .catch(err => {
+                  console.warn("Could not sign in anonymously (may not have Email/Anonymous enabled):", err);
+                });
+            }
+            
             isOfflineSandbox = false;
             document.getElementById('db-engine-caption').innerHTML = `<span class="text-gaming-neonGreen"><i class="fa-solid fa-circle-check"></i> Firebase Connected Realtime Cloud Engine Active</span>`;
             
@@ -617,6 +730,12 @@
         supportTicketsData = sn.val() ? Object.values(sn.val()) : [];
         renderSupportTickets();
       });
+
+      database.ref('adminLoginAttempts').on('value', sn => {
+        const val = sn.val();
+        adminLoginAttemptsData = val ? Object.values(val) : [];
+        renderAuditLogs();
+      });
     }
 
     function loadInitialDataViews() {
@@ -632,6 +751,7 @@
       withdrawalsData = JSON.parse(localStorage.getItem('W&E_SANDBOX_WITHDRAWALS')) || [];
       usersData = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS')) || {};
       supportTicketsData = JSON.parse(localStorage.getItem('W&E_SANDBOX_TICKETS')) || [];
+      adminLoginAttemptsData = JSON.parse(localStorage.getItem('W&E_SANDBOX_AUDIT_LOGS')) || [];
 
       // draws
       calculateDashboardOverview();
@@ -641,11 +761,12 @@
       renderUsersMatrix();
       renderSupportTickets();
       renderSettingsConfigScreen();
+      renderAuditLogs();
     }
 
     // --- Tab-to-Tab Sections Switchers ---
     function switchAdminSection(destId) {
-      const keys = ['dashboard', 'videos', 'banners', 'withdrawals', 'users', 'tickets', 'settings'];
+      const keys = ['dashboard', 'videos', 'banners', 'withdrawals', 'users', 'tickets', 'settings', 'audit_logs'];
       keys.forEach(k => {
         document.getElementById(`section-${k}`).classList.add('hidden');
         
@@ -737,11 +858,15 @@
         const vList = JSON.parse(localStorage.getItem('W&E_SANDBOX_VIDEOS'));
         vList.push(newVideoPayload);
         localStorage.setItem('W&E_SANDBOX_VIDEOS', JSON.stringify(vList));
+        logAdminAction("ADD_VIDEO", `Added new watch earning video: "${title}" (ID: ${freshVideoKey}, Coins: ${coins})`, "CREATE");
         alert("Watch Video added successfully (Sandbox Mode)!");
         loadInitialDataViews();
       } else {
         database.ref('videos/' + freshVideoKey).set(newVideoPayload)
-          .then(() => alert("Earning Video deployed successfully!"));
+          .then(() => {
+            logAdminAction("ADD_VIDEO", `Deploy watch earning video: "${title}" (ID: ${freshVideoKey}, Coins: ${coins})`, "CREATE");
+            alert("Earning Video deployed successfully!");
+          });
       }
 
       // clear injection block fields
@@ -790,32 +915,42 @@
       const vid = videosData[id];
       if (!vid) return;
 
+      const targetNewState = !vid.active;
       if (isOfflineSandbox) {
         const vList = JSON.parse(localStorage.getItem('W&E_SANDBOX_VIDEOS'));
         const index = vList.findIndex(x => x.id === id);
         if (index !== -1) {
-          vList[index].active = !vList[index].active;
+          vList[index].active = targetNewState;
           localStorage.setItem('W&E_SANDBOX_VIDEOS', JSON.stringify(vList));
+          logAdminAction("TOGGLE_VIDEO_STATUS", `Toggled video "${vid.title || id}" (ID: ${id}) to ${targetNewState ? 'ACTIVE' : 'INACTIVE'}`, "UPDATE");
           loadInitialDataViews();
         }
       } else {
-        database.ref('videos/' + id + '/active').set(!vid.active)
-          .then(() => alert("Video active state toggled successfully!"))
+        database.ref('videos/' + id + '/active').set(targetNewState)
+          .then(() => {
+            logAdminAction("TOGGLE_VIDEO_STATUS", `Toggled video "${vid.title || id}" (ID: ${id}) to ${targetNewState ? 'ACTIVE' : 'INACTIVE'}`, "UPDATE");
+            alert("Video active state toggled successfully!");
+          })
           .catch(err => alert("Error toggling video active state: " + err.message));
       }
     }
 
     function triggerVideoEjectionWipe(id) {
       if (!confirm("Remove selected reward video from users lists?")) return;
+      const targetVideo = videosData[id] || {};
 
       if (isOfflineSandbox) {
         const vList = JSON.parse(localStorage.getItem('W&E_SANDBOX_VIDEOS'));
         const f = vList.filter(x => x.id !== id);
         localStorage.setItem('W&E_SANDBOX_VIDEOS', JSON.stringify(f));
+        logAdminAction("DELETE_VIDEO", `Deleted watch earning video: "${targetVideo.title || id}" (ID: ${id})`, "DELETE");
         loadInitialDataViews();
       } else {
         database.ref('videos/' + id).remove()
-          .then(() => alert("Video deleted successfully!"))
+          .then(() => {
+            logAdminAction("DELETE_VIDEO", `Deleted watch earning video: "${targetVideo.title || id}" (ID: ${id})`, "DELETE");
+            alert("Video deleted successfully!");
+          })
           .catch(err => alert("Error deleting video: " + err.message));
       }
     }
@@ -836,10 +971,19 @@
       const load = { id: freshBannerKey, title: title, description: desc, imageUrl: img, redirectLink: red, active: true };
 
       if (isOfflineSandbox) {
+        const list = JSON.parse(localStorage.getItem('W&E_SANDBOX_BANNERS')) || [];
+        list.push(load);
+        localStorage.setItem('W&E_SANDBOX_BANNERS', JSON.stringify(list));
+        bannersData = list;
+        logAdminAction("ADD_BANNER", `Configured dashboard promo banner: "${title}" (ID: ${freshBannerKey})`, "CREATE");
         alert("Banner templates deployment finished (Sandbox Only)!");
+        loadInitialDataViews();
       } else {
         database.ref('banners/' + freshBannerKey).set(load)
-          .then(() => alert("Alert banner deployed successfully on dashboard!"));
+          .then(() => {
+            logAdminAction("ADD_BANNER", `Configured dashboard promo banner: "${title}" (ID: ${freshBannerKey})`, "CREATE");
+            alert("Alert banner deployed successfully on dashboard!");
+          });
       }
 
       document.getElementById('bn-title').value = "";
@@ -942,6 +1086,7 @@
           }
 
           localStorage.setItem('W&E_SANDBOX_WITHDRAWALS', JSON.stringify(full));
+          logAdminAction("WITHDRAWAL", `Withdrawal claim request ID: ${txId} processed as ${targetTx.status.toUpperCase()} (${reason})`, approve ? "SUCCESS" : "FAILED");
           alert(`Claim status updated to ${targetTx.status.toUpperCase()}!`);
           loadInitialDataViews();
         }
@@ -960,7 +1105,10 @@
             }
 
             database.ref().update(updates)
-              .then(() => alert(`Withdrawal claim successfully processed as ${statusStr.toUpperCase()}.`))
+              .then(() => {
+                logAdminAction("WITHDRAWAL", `Withdrawal claim request ID: ${txId} processed as ${statusStr.toUpperCase()} (${reason})`, approve ? "SUCCESS" : "FAILED");
+                alert(`Withdrawal claim successfully processed as ${statusStr.toUpperCase()}.`);
+              })
               .catch(err => alert("Error updating withdrawal claim: " + err.message));
           }
         });
@@ -1033,10 +1181,14 @@
         const map = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
         map[uid].coins = parsed;
         localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(map));
+        logAdminAction("BALANCE_EDIT", `Adjusted user "${u.username || uid}" coins to: ${parsed}`, "UPDATE");
         loadInitialDataViews();
       } else {
         database.ref('users/' + uid + '/coins').set(parsed)
-          .then(() => alert(`Updated user coin balance successfully!`))
+          .then(() => {
+            logAdminAction("BALANCE_EDIT", `Adjusted user "${u.username || uid}" coins to: ${parsed}`, "UPDATE");
+            alert(`Updated user coin balance successfully!`);
+          })
           .catch(err => alert("Error updating coins: " + err.message));
       }
     }
@@ -1048,14 +1200,19 @@
       const actStr = u.isBanned ? "unban" : "suspend";
       if (!confirm(`Do you want to ${actStr} player account profile: ${u.username}?`)) return;
 
+      const targetBanState = !u.isBanned;
       if (isOfflineSandbox) {
         const map = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
-        map[uid].isBanned = !u.isBanned;
+        map[uid].isBanned = targetBanState;
         localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(map));
+        logAdminAction("USER_BAN_TOGGLE", `${targetBanState ? 'BANNED' : 'UNBANNED'} user "${u.username || uid}" (ID: ${uid})`, targetBanState ? "FAILED" : "SUCCESS");
         loadInitialDataViews();
       } else {
-        database.ref('users/' + uid + '/isBanned').set(!u.isBanned)
-          .then(() => alert(`User status toggled successfully!`))
+        database.ref('users/' + uid + '/isBanned').set(targetBanState)
+          .then(() => {
+            logAdminAction("USER_BAN_TOGGLE", `${targetBanState ? 'BANNED' : 'UNBANNED'} user "${u.username || uid}" (ID: ${uid})`, targetBanState ? "FAILED" : "SUCCESS");
+            alert(`User status toggled successfully!`);
+          })
           .catch(err => alert("Error toggling status: " + err.message));
       }
     }
@@ -1108,12 +1265,16 @@
         if (index !== -1) {
           full[index].reply = field;
           localStorage.setItem('W&E_SANDBOX_TICKETS', JSON.stringify(full));
+          logAdminAction("SUPPORT_REPLY", `Replied to Support Ticket ID: ${ticketId} with message: "${field}"`, "REPLY");
           alert("Ticket reply logged (Sandbox Mode)!");
           loadInitialDataViews();
         }
       } else {
         database.ref('supportTickets/' + ticketId + '/reply').set(field)
-          .then(() => alert(`Reply sent successfully!`))
+          .then(() => {
+            logAdminAction("SUPPORT_REPLY", `Replied to Support Ticket ID: ${ticketId} with message: "${field}"`, "REPLY");
+            alert(`Reply sent successfully!`);
+          })
           .catch(err => alert("Error sending reply: " + err.message));
       }
     }
@@ -1127,12 +1288,16 @@
         if (index !== -1) {
           full[index].status = 'resolved';
           localStorage.setItem('W&E_SANDBOX_TICKETS', JSON.stringify(full));
+          logAdminAction("SUPPORT_RESOLVE", `Resolved Support Ticket ID: ${ticketId}`, "SUCCESS");
           alert("Complaint successfully resolved!");
           loadInitialDataViews();
         }
       } else {
         database.ref('supportTickets/' + ticketId + '/status').set('resolved')
-          .then(() => alert(`Ticket marked resolved successfully!`))
+          .then(() => {
+            logAdminAction("SUPPORT_RESOLVE", `Resolved Support Ticket ID: ${ticketId}`, "SUCCESS");
+            alert(`Ticket marked resolved successfully!`);
+          })
           .catch(err => alert("Error resolving ticket: " + err.message));
       }
     }
@@ -1161,13 +1326,18 @@
 
     function togglePlatformMaintenanceEmergencySwitch() {
       const isMaint = siteSettings.maintenanceMode || false;
+      const targetState = !isMaint;
       if (isOfflineSandbox) {
-        siteSettings.maintenanceMode = !isMaint;
+        siteSettings.maintenanceMode = targetState;
         localStorage.setItem('W&E_SANDBOX_SETTINGS', JSON.stringify(siteSettings));
+        logAdminAction("MAINTENANCE_TOGGLE", `Toggled platform lock/maintenance status to: ${targetState ? 'LOCKED/ACTIVE' : 'UNLOCKED/INACTIVE'}`, targetState ? "FAILED" : "SUCCESS");
         loadInitialDataViews();
       } else {
-        database.ref('settings/maintenanceMode').set(!isMaint)
-          .then(() => alert("System lock status updated!"))
+        database.ref('settings/maintenanceMode').set(targetState)
+          .then(() => {
+            logAdminAction("MAINTENANCE_TOGGLE", `Toggled platform lock/maintenance status to: ${targetState ? 'LOCKED/ACTIVE' : 'UNLOCKED/INACTIVE'}`, targetState ? "FAILED" : "SUCCESS");
+            alert("System lock status updated!");
+          })
           .catch(err => alert("Error toggling system lock: " + err.message));
       }
     }
@@ -1195,11 +1365,15 @@
       if (isOfflineSandbox) {
         localStorage.setItem('W&E_SANDBOX_SETTINGS', JSON.stringify(load));
         siteSettings = load;
+        logAdminAction("SETTINGS_UPDATE", `Updated system parameters (Rate: ${r}, Min Withdraw: ${min}, Announcement: "${m}")`, "UPDATE");
         alert("Settings persisted in local memory successfully (Sandbox Mode)!");
         loadInitialDataViews();
       } else {
         database.ref('settings').update(load)
-          .then(() => alert("All config revisions applied to client panels in real-time!"));
+          .then(() => {
+            logAdminAction("SETTINGS_UPDATE", `Updated system parameters (Rate: ${r}, Min Withdraw: ${min}, Announcement: "${m}")`, "UPDATE");
+            alert("All config revisions applied to client panels in real-time!");
+          });
       }
     }
 
@@ -1276,6 +1450,79 @@
           }
         }
       });
+    }
+
+    function clearAuditLogs() {
+      if (!confirm("Are you sure you want to flush all security audit logs? This action is irreversible.")) return;
+
+      if (isOfflineSandbox || !database) {
+        localStorage.removeItem('W&E_SANDBOX_AUDIT_LOGS');
+        adminLoginAttemptsData = [];
+        renderAuditLogs();
+        alert("Local sandbox audit logs flushed.");
+      } else {
+        database.ref('adminLoginAttempts').remove()
+          .then(() => alert("Cloud Realtime database audit logs flushed successfully."))
+          .catch(err => alert("Error flushing logs: " + err.message));
+      }
+    }
+
+    function renderAuditLogs() {
+      const container = document.getElementById('admin-audit-rows');
+      if (!container) return;
+
+      if (!adminLoginAttemptsData || adminLoginAttemptsData.length === 0) {
+        container.innerHTML = `
+          <tr>
+            <td colspan="4" class="p-8 text-center text-gaming-textMuted text-xs">
+              <i class="fa-solid fa-shield-halved text-3xl opacity-20 block mb-2 text-gaming-neonPink"></i>
+              No security auditing logs recorded yet.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      // Sort logs descending by timestamp (latest first)
+      const sortedLogs = [...adminLoginAttemptsData].sort((a, b) => {
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      });
+
+      container.innerHTML = sortedLogs.map(log => {
+        const isSuccess = log.status === 'SUCCESS';
+        const badgeClass = isSuccess 
+          ? 'bg-gaming-neonGreen/15 text-gaming-neonGreen border border-gaming-neonGreen/30' 
+          : 'bg-gaming-neonPink/15 text-gaming-neonPink border border-gaming-neonPink/30';
+        
+        const pinDisplayed = log.enteredPin ? `PIN Code Entered: <code class="bg-[#121824] px-1.5 py-0.5 rounded text-white tracking-widest text-[10px] font-bold">${log.enteredPin}</code>` : '';
+        const clientFormattedTime = log.clientTime || new Date(log.timestamp).toLocaleString();
+
+        return `
+          <tr class="border-b border-white/5 hover:bg-white/[0.02] transition animate-fadeIn">
+            <td class="p-3">
+              <div class="font-semibold text-white whitespace-nowrap"><i class="fa-regular fa-clock text-gaming-secondary mr-1"></i> ${clientFormattedTime}</div>
+              <div class="text-[9px] text-gaming-textMuted whitespace-nowrap">${log.timestamp}</div>
+            </td>
+            <td class="p-3">
+              <div class="text-white font-medium">${log.details || ''}</div>
+              <div class="text-[10px] mt-1">${pinDisplayed}</div>
+            </td>
+            <td class="p-3">
+              <span class="px-2 py-1 rounded text-[10px] uppercase font-bold inline-block ${badgeClass}">
+                <i class="fa-solid ${isSuccess ? 'fa-shield-check' : 'fa-circle-exclamation'} mr-1"></i> ${log.status}
+              </span>
+            </td>
+            <td class="p-3 max-w-xs md:max-w-md truncate">
+              <div class="text-white font-mono text-[10px] whitespace-nowrap overflow-hidden text-ellipsis" title="${log.userAgent}">
+                <i class="fa-solid fa-laptop text-gaming-primary mr-1"></i> ${log.platform || 'Unknown Target'}
+              </div>
+              <div class="text-[9px] text-gaming-textMuted truncate mt-0.5" title="${log.userAgent}">
+                Device: ${log.userAgent}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
 
   </script>

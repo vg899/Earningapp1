@@ -628,16 +628,29 @@
     // --- Core Database Engine Routing ---
     function initDatabaseEngine() {
       let storedConfig = localStorage.getItem('FIREBASE_WATCH_AND_EARN_CONFIG');
+      if (storedConfig) {
+        try {
+          const cfg = JSON.parse(storedConfig);
+          if (cfg.projectId !== "cointube-220ad") {
+            localStorage.removeItem('FIREBASE_WATCH_AND_EARN_CONFIG');
+            storedConfig = null;
+          }
+        } catch (e) {
+          localStorage.removeItem('FIREBASE_WATCH_AND_EARN_CONFIG');
+          storedConfig = null;
+        }
+      }
+
       if (!storedConfig) {
         const defaultFirebaseConfig = {
-          apiKey: "AIzaSyCSgInnq7TAHouOLDm_OWLV5eiCYdDOViw",
-          authDomain: "earning-f0702.firebaseapp.com",
-          databaseURL: "https://earning-f0702-default-rtdb.firebaseio.com",
-          projectId: "earning-f0702",
-          storageBucket: "earning-f0702.firebasestorage.app",
-          messagingSenderId: "237104042249",
-          appId: "1:237104042249:web:7dd97c33d31b4a9e8b83d8",
-          measurementId: "G-Y9201J7Q15"
+          apiKey: "AIzaSyAOO7nJ6laFdz-vX9hN2xr0DQcfYZSPI_U",
+          authDomain: "cointube-220ad.firebaseapp.com",
+          databaseURL: "https://cointube-220ad-default-rtdb.firebaseio.com",
+          projectId: "cointube-220ad",
+          storageBucket: "cointube-220ad.firebasestorage.app",
+          messagingSenderId: "798441175337",
+          appId: "1:798441175337:web:cb41ba704f75ea5f94df38",
+          measurementId: "G-0WPB5C73TJ"
         };
         localStorage.setItem('FIREBASE_WATCH_AND_EARN_CONFIG', JSON.stringify(defaultFirebaseConfig));
         storedConfig = JSON.stringify(defaultFirebaseConfig);
