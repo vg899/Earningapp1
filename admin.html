@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Watch & Earn - Admin Portal</title>
+  
+  <!-- Icons & Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS & JS Scripts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Poppins', 'sans-serif'], gaming: ['Orbitron', 'sans-serif'] },
+          colors: {
+            gaming: {
+              dark: '#05070c', card: '#0f131f', primary: '#00f2fe', secondary: '#4facfe',
+              neonPink: '#ff007f', neonGreen: '#39ff14', neonGold: '#ffd700', textMuted: '#8b9bb4'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { background-color: #05070c; font-family: 'Poppins', sans-serif; }
+    .neon-border { border: 1px solid rgba(0, 242, 254, 0.2); box-shadow: 0 0 10px rgba(0, 242, 254, 0.1); }
+    .neon-text { text-shadow: 0 0 8px rgba(0, 242, 254, 0.6); }
+    .glass { background: rgba(15, 19, 31, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  </style>
+</head>
+<body class="text-white min-h-screen">
+
+  <!-- ================= ADMIN PIN AUTHORIZATION CARD ================= -->
+  <div id="admin-auth-screen" class="min-h-screen flex flex-col justify-center items-center px-4">
+    <div class="glass border border-white/10 w-full max-w-sm p-6 rounded-3xl text-center space-y-6 shadow-2xl">
+      <div class="w-16 h-16 bg-gradient-to-tr from-gaming-primary to-gaming-secondary rounded-2xl mx-auto flex items-center justify-center text-black text-2xl shadow-lg border border-gaming-primary">
+        <i class="fa-solid fa-laptop-code"></i>
+      </div>
+      <div>
+        <h1 class="font-gaming text-xl font-black text-gaming-primary tracking-widest">ADMIN SECURITY GATE</h1>
+        <p class="text-xs text-gaming-textMuted mt-1">Enter platform PIN to open controller panels.</p>
+      </div>
+      <div>
+        <label class="block text-xs text-left text-gaming-textMuted mb-1.5">PIN Credentials</label>
+        <div class="relative"><i class="fa-solid fa-key absolute left-3 top-3.5 text-white/30 text-sm"></i>
+          <input id="admin-pin-field" type="password" value="1234" placeholder="••••" class="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-10 text-center outline-none tracking-widest text-lg font-bold text-white focus:border-gaming-primary"></div>
+      </div>
+      <button onclick="authorizeAdminPIN()" class="w-full bg-gradient-to-r from-gaming-primary to-gaming-secondary py-3.5 rounded-xl text-black font-gaming font-bold text-xs active:scale-95 transition">AUTHENTICATE PANEL</button>
+    </div>
+  </div>
+
+  <!-- ================= MAIN ADMIN DASHBOARD WORKSPACE ================= -->
+  <div id="admin-app-screen" class="hidden pb-12">
+    
+    <!-- Top Nav Controls -->
+    <header class="bg-gaming-dark/80 backdrop-blur border-b border-white/5 sticky top-0 z-40 px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gaming-card rounded-lg border border-gaming-primary/40 flex items-center justify-center text-gaming-primary"><i class="fa-solid fa-gears text-lg"></i></div>
+        <div>
+          <h1 class="font-gaming text-sm font-extrabold text-white">REWARDS ENGINE CONTROLLER</h1>
+          <p class="text-[10px] text-gaming-textMuted" id="db-engine-caption">Connecting Database Schema...</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="logoutAdminPanel()" class="bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl text-[10px] uppercase font-bold text-gaming-textMuted flex items-center gap-1.5"><i class="fa-solid fa-right-from-bracket"></i> Quit Session</button>
+      </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+      <!-- ================= SIDE PANEL NAVIGATION MENU ================= -->
+      <aside class="space-y-2 lg:col-span-1">
+        <button onclick="switchAdminSection('dashboard')" id="nav-btn-dashboard" class="w-full py-3.5 px-4 bg-gaming-primary text-black rounded-xl text-left font-gaming font-semibold text-xs flex items-center gap-2.5 transition">
+          <i class="fa-solid fa-chart-simple text-sm"></i> Dashboard Overview
+        </button>
+        <button onclick="switchAdminSection('videos')" id="nav-btn-videos" class="w-full py-3.5 px-4 bg-gaming-card hover:bg-[#121824] border border-white/5 text-gaming-textMuted hover:text-white rounded-xl text-left font-gaming font-semibold text-xs flex items-center gap-2.5 transition">
+          <i class="fa-solid fa-video text-sm"></i> Video Watch & Earn
+        </button>
+        <button onclick="switchAdminSection('banners')" id="nav-btn-banners" class="w-full py-3.5 px-4 bg-gaming-card hover:bg-[#121824] border border-white/5 text-gaming-textMuted hover:text-white rounded-xl text-left font-gaming font-semibold text-xs flex items-center gap-2.5 transition">
+          <i class="fa-solid fa-images text-sm"></i> Banner Sliders
+        </button>
+        <button onclick="switchAdminSection('withdrawals')" id="nav-btn-withdrawals" class="w-full py-3.5 px-4 bg-gaming-card hover:bg-[#121824] border border-white/5 text-gaming-textMuted hover:text-white rounded-xl text-left font-gaming font-semibold text-xs flex items-center gap-2.5 relative transition">
+          <i class="fa-solid fa-wallet text-sm"></i> UPI cash-outs
+          <span id="pending-counter-badge" class="absolute right-4 top-3.5 bg-gaming-neonPink text-white text-[9px] px-1.5 rounded-md font-bold hidden">0</span>
+        </button>
+        <button onclick="switchAdminSection('users')" id="nav-btn-users" class="w-full py-3.5 px-4 bg-gaming-card hover:bg-[#121824] border border-white/5 text-gaming-textMuted hover:text-white rounded-xl text-left font-gaming font-semibold text-xs flex items-center gap-2.5 transition">
+          <i class="fa-solid fa-users text-sm"></i> Users Control Center
+        </button>
+        <button onclick="switchAdminSection('tickets')" id="nav-btn-tickets" class="w-full py-3.5 px-4 bg-gaming-card hover:bg-[#121824] border border-white/5 text-gaming-textMuted hover:text-white rounded-xl text-left font-gaming font-semibold text-xs flex items-center gap-2.5 transition">
+          <i class="fa-solid fa-headset text-sm"></i> Support & complaints
+        </button>
+        <button onclick="switchAdminSection('settings')" id="nav-btn-settings" class="w-full py-3.5 px-4 bg-gaming-card hover:bg-[#121824] border border-white/5 text-gaming-textMuted hover:text-white rounded-xl text-left font-gaming font-semibold text-xs flex items-center gap-2.5 transition">
+          <i class="fa-solid fa-sliders text-sm"></i> Platform Parameters
+        </button>
+      </aside>
+
+      <!-- ================= CONTENT WORKSPACE BLOCKS ================= -->
+      <main class="lg:col-span-3 space-y-6">
+
+        <!-- ================= CONTAINER: DASHBOARD ================= -->
+        <section id="section-dashboard" class="space-y-6">
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-gaming-card p-4 rounded-2xl border border-white/5 shadow-xl">
+              <span class="text-[10px] text-gaming-textMuted uppercase flex items-center gap-1.5"><i class="fa-solid fa-users text-gaming-primary"></i> ENTIRE PLAYERS</span>
+              <div class="font-gaming text-xl text-white mt-1.5 font-bold" id="metric-total-users">0</div>
+            </div>
+            <div class="bg-gaming-card p-4 rounded-2xl border border-white/5 shadow-xl">
+              <span class="text-[10px] text-gaming-textMuted uppercase flex items-center gap-1.5"><i class="fa-solid fa-video text-gaming-secondary"></i> ACTIVE VIDEOS</span>
+              <div class="font-gaming text-xl text-white mt-1.5 font-bold" id="metric-active-videos">0</div>
+            </div>
+            <div class="bg-gaming-card p-4 rounded-2xl border border-white/5 shadow-xl">
+              <span class="text-[10px] text-gaming-textMuted uppercase flex items-center gap-1.5"><i class="fa-solid fa-money-bill-transfer text-gaming-neonGreen"></i> TOTAL WITHDRAWALS REQUESTS</span>
+              <div class="font-gaming text-xl text-white mt-1.5 font-bold" id="metric-total-withdrawals">0</div>
+            </div>
+            <div class="bg-gaming-card p-4 rounded-2xl border border-white/5 shadow-xl">
+              <span class="text-[10px] text-gaming-textMuted uppercase flex items-center gap-1.5"><i class="fa-solid fa-coins text-gaming-neonGold animate-spin-slow"></i> OUTSTANDING LEDGER VALUE</span>
+              <div class="font-gaming text-xl text-white mt-1.5 font-bold" id="metric-total-distributed">0</div>
+            </div>
+          </div>
+
+          <!-- Charts Graph Dashboard block -->
+          <div class="bg-gaming-card p-5 rounded-2xl border border-white/5 shadow-2xl">
+            <h3 class="font-gaming text-xs text-gaming-primary tracking-wide mb-4"><i class="fa-solid fa-chart-line"></i> ENGINE THROUGHPUT ANALYSIS</h3>
+            <div class="relative w-full h-80">
+              <canvas id="analytics-chart-canvas"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= CONTAINER: VIDEOS ================= -->
+        <section id="section-videos" class="space-y-6 hidden">
+          <!-- Video Insertion Form panel -->
+          <div class="glass p-5 rounded-2xl border border-white/5 space-y-4 shadow-xl">
+            <h3 class="font-gaming text-xs text-gaming-secondary tracking-wide border-b border-white/5 pb-2"><i class="fa-solid fa-plus-circle mr-1.5"></i> INJECT REWARD VIDEO TO PLATFORM</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div>
+                <label class="block text-gaming-textMuted mb-2">YouTube URL / ID Parameter</label>
+                <input id="vd-yt-id" type="text" placeholder="dQw4w9WgXcQ or full link" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 outline-none focus:border-gaming-primary">
+              </div>
+              <div>
+                <label class="block text-gaming-textMuted mb-2">Display Gaming Title</label>
+                <input id="vd-title" type="text" placeholder="Apex Pro Highlights 2026" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 outline-none focus:border-gaming-primary">
+              </div>
+              <div>
+                <label class="block text-gaming-textMuted mb-2">Coin Value Tokens payout amount</label>
+                <input id="vd-coins" type="number" placeholder="150" value="150" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 outline-none focus:border-gaming-primary">
+              </div>
+              <div>
+                <label class="block text-gaming-textMuted mb-2">Required watch Duration (seconds)</label>
+                <input id="vd-secs" type="number" placeholder="60" value="60" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 outline-none focus:border-gaming-primary">
+              </div>
+              <div>
+                <label class="block text-gaming-textMuted mb-2">Category Selection Tag</label>
+                <select id="vd-cat" class="w-full bg-[#121824] border border-white/10 rounded-xl p-3 text-gaming-textMuted outline-none focus:border-gaming-primary font-semibold">
+                  <option value="Gaming">Gaming Grid</option>
+                  <option value="Music">Music Soundtracks</option>
+                  <option value="Crypto">Crypto Analysis</option>
+                  <option value="Entertainment">Entertainment Trailers</option>
+                  <option value="Tech">Tech Exploration</option>
+                  <option value="Sponsored">Sponsored Ads</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-gaming-textMuted mb-2">Direct Thumbnail Image Address</label>
+                <input id="vd-thumb" type="text" placeholder="https://source.unsplash.com/promo-art" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 outline-none focus:border-gaming-primary">
+              </div>
+            </div>
+            
+            <div class="flex gap-4">
+              <label class="flex items-center gap-2 text-xs text-gaming-textMuted cursor-pointer">
+                <input id="vd-feat" type="checkbox" class="accent-gaming-primary scale-125"> Mark Featured Video Layout
+              </label>
+              <label class="flex items-center gap-2 text-xs text-gaming-textMuted cursor-pointer">
+                <input id="vd-spon" type="checkbox" class="accent-gaming-primary scale-125"> Mark Sponsored Ad Layout
+              </label>
+            </div>
+
+            <button onclick="submitInjectionVideoSpec()" class="w-full py-3.5 bg-gradient-to-r from-gaming-primary to-gaming-secondary rounded-xl text-black font-gaming font-extrabold text-xs active:scale-95 transition">UPLOAD WATCH STREAM NOW</button>
+          </div>
+
+          <!-- Active Streams Listings -->
+          <div class="bg-gaming-card p-5 rounded-2xl border border-white/5 space-y-4">
+            <h3 class="font-gaming text-xs text-gaming-primary tracking-wide"><i class="fa-solid fa-list-check"></i> MANAGE ACTIVE REWARDS STREAMS</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-gaming-textMuted">
+                <thead class="bg-black/40 text-gaming-primary font-gaming border-b border-white/5">
+                  <tr>
+                    <th class="p-3">Video Title / Category</th>
+                    <th class="p-3">Required Time / Coins</th>
+                    <th class="p-3">Settings</th>
+                    <th class="p-3 text-center">Delete</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-video-rows-list">
+                  <!-- Injected dynamic rows with buttons -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= CONTAINER: BANNERS ================= -->
+        <section id="section-banners" class="space-y-6 hidden">
+          <div class="glass p-5 rounded-2xl border border-white/5 space-y-4 shadow-xl">
+            <h3 class="font-gaming text-xs text-gaming-secondary tracking-wide border-b border-white/5 pb-2"><i class="fa-solid fa-images mr-1.5"></i> CONFIGURE NEW SLIDE BANNER</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div>
+                <label class="block text-gaming-textMuted mb-2">Banner Title Tag</label>
+                <input id="bn-title" type="text" placeholder="Gaming Mega Drop Event!" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 outline-none focus:border-gaming-primary">
+              </div>
+              <div>
+                <label class="block text-gaming-textMuted mb-2">Brief Description Tag</label>
+                <input id="bn-desc" type="text" placeholder="Complete 5 tasks and claim massive daily bonuses" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 outline-none focus:border-gaming-primary">
+              </div>
+              <div>
+                <label class="block text-gaming-textMuted mb-2">Direct Background Picture URL адрес</label>
+                <input id="bn-img" type="text" placeholder="https://images.unsplash.com/photo-banner" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 outline-none focus:border-gaming-primary">
+              </div>
+              <div>
+                <label class="block text-gaming-textMuted mb-2">Redirect Tab Link Designation</label>
+                <select id="bn-link" class="w-full bg-[#121824] border border-white/10 rounded-xl p-3 text-gaming-textMuted outline-none focus:border-gaming-primary font-semibold">
+                  <option value="videos">Watch Video Page</option>
+                  <option value="rewards">Earning Games Grid</option>
+                  <option value="wallet">Users wallet Center</option>
+                </select>
+              </div>
+            </div>
+            <button onclick="submitSliderBanner()" class="w-full py-3.5 bg-gradient-to-r from-gaming-primary to-gaming-secondary rounded-xl text-black font-gaming font-extrabold text-xs active:scale-95 transition">GENERATE AND DEPLOY SLIDER CARDS</button>
+          </div>
+
+          <!-- Banners Active Table List -->
+          <div class="bg-gaming-card p-5 rounded-2xl border border-white/5 space-y-4">
+            <h3 class="font-gaming text-xs text-gaming-primary tracking-wide"><i class="fa-solid fa-sliders"></i> ACTIVE COMPONENT BANNER STATIONS</h3>
+            <div id="admin-banner-cards-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Rendered Banners dynamic -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= CONTAINER: WITHDRAWALS ================= -->
+        <section id="section-withdrawals" class="space-y-6 hidden">
+          <div class="bg-gaming-card p-5 rounded-2xl border border-white/5 space-y-4 shadow-xl">
+            <div class="flex items-center justify-between border-b border-white/5 pb-3">
+              <h3 class="font-gaming text-xs text-gaming-primary tracking-wide"><i class="fa-solid fa-money-check-dollar"></i> PROCESS REDEMPTION REQUESTS</h3>
+              <!-- Mini filter metrics tabs -->
+              <div class="flex gap-1 bg-black/50 p-1 rounded-xl">
+                <button onclick="filterRedemptionClaims('pending')" id="btn-wf-pending" class="px-3 py-1.5 text-[10px] rounded-lg font-bold bg-gaming-primary text-black">Pending</button>
+                <button onclick="filterRedemptionClaims('approved')" id="btn-wf-approved" class="px-3 py-1.5 text-[10px] rounded-lg font-bold text-gaming-textMuted">Approved</button>
+                <button onclick="filterRedemptionClaims('rejected')" id="btn-wf-rejected" class="px-3 py-1.5 text-[10px] rounded-lg font-bold text-gaming-textMuted">Rejected</button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-gaming-textMuted">
+                <thead class="bg-black/40 text-gaming-secondary font-gaming border-b border-white/5">
+                  <tr>
+                    <th class="p-3">Applicant / UPI Address</th>
+                    <th class="p-3">Requested Coins</th>
+                    <th class="p-3">Timestamp Log</th>
+                    <th class="p-3 text-center">Fast Action Panel</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-withdrawals-rows">
+                  <!-- Dynamic rows from script state -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= CONTAINER: USERS ================= -->
+        <section id="section-users" class="space-y-6 hidden">
+          <div class="bg-gaming-card p-5 rounded-2xl border border-white/5 space-y-4 shadow-xl">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-3">
+              <h3 class="font-gaming text-xs text-gaming-primary tracking-wide"><i class="fa-solid fa-user-shield"></i> PLAYERS MANAGEMENT CONSOLE</h3>
+              <div class="relative w-full md:w-64">
+                <input id="user-search-field" type="text" onkeyup="searchUsersTable()" placeholder="Filter usernames or emails..." class="w-full bg-black/40 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-xs outline-none focus:border-gaming-primary text-white">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-white/30 text-[10px]"></i>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-gaming-textMuted">
+                <thead class="bg-black/40 text-gaming-secondary font-gaming border-b border-white/5">
+                  <tr>
+                    <th class="p-3">Player Credentials</th>
+                    <th class="p-3">Active Wallet Details</th>
+                    <th class="p-3">Levelling XP</th>
+                    <th class="p-3 text-center">Integrity Toggles</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-user-rows">
+                  <!-- dynamic lists -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= CONTAINER: TICKETS ================= -->
+        <section id="section-tickets" class="space-y-6 hidden">
+          <div class="bg-gaming-card p-5 rounded-2xl border border-white/5 space-y-4 shadow-xl">
+            <h3 class="font-gaming text-xs text-gaming-primary tracking-wide border-b border-white/5 pb-2"><i class="fa-solid fa-envelope-open-text"></i> REVIEWS AND COMPLAINTS TICKETS QUEUE</h3>
+            <div class="space-y-4" id="admin-tickets-container">
+              <!-- Help items compiled here -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= CONTAINER: SETTINGS ================= -->
+        <section id="section-settings" class="space-y-6 hidden bg-gaming-card">
+          <div class="glass p-6 rounded-3xl border border-white/10 space-y-6 shadow-2xl">
+            <h3 class="font-gaming text-xs text-gaming-secondary tracking-wide border-b border-white/5 pb-2"><i class="fa-solid fa-wrench"></i> PLATFORM DYNAMICS AND RATIOS</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-gaming-textMuted">
+              <div class="space-y-2">
+                <label class="block">Coin to Currency Conversion Scale (e.g. 1000 Coins = 1 Currency units)</label>
+                <input id="set-rate" type="number" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-gaming-primary">
+              </div>
+              <div class="space-y-2">
+                <label class="block">Currency Unit Symbol Tag</label>
+                <input id="set-sym" type="text" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-gaming-primary">
+              </div>
+              <div class="space-y-2">
+                <label class="block">Minimum Allowed Withdrawal cashout check limits (in coins)</label>
+                <input id="set-min" type="number" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-gaming-primary">
+              </div>
+              <div class="space-y-2">
+                <label class="block">Daily Sign-in bonus payout (coins)</label>
+                <input id="set-daily" type="number" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-gaming-primary">
+              </div>
+              <div class="space-y-2">
+                <label class="block">App Support desk WhatsApp Contact Link URL address</label>
+                <input id="set-whatsapp" type="text" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-gaming-primary">
+              </div>
+              <div class="space-y-2">
+                <label class="block">Telegram Channel alert broadcast handle address</label>
+                <input id="set-telegram" type="text" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-gaming-primary">
+              </div>
+              <div class="col-span-1 md:col-span-2 space-y-2">
+                <label class="block">Ticking Broadcast Ticker Announcement Marquee (in-app scrolling alert)</label>
+                <textarea id="set-marquee" rows="2" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-gaming-primary"></textarea>
+              </div>
+            </div>
+
+            <!-- Maintenance Check toggle option -->
+            <div class="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5">
+              <div>
+                <h4 class="text-xs font-bold text-white uppercase tracking-wider">SYSTEM MAINTENANCE EMERGENCY LOCK</h4>
+                <p class="text-[10px] text-gaming-textMuted mt-1">If enabled, blocks normal application loading screens globally immediately.</p>
+              </div>
+              <button id="set-maint-btn" onclick="togglePlatformMaintenanceEmergencySwitch()" class="px-5 py-2 rounded-xl text-xs font-gaming font-extrabold uppercase bg-gaming-neonPink text-white shadow-lg tracking-wider">OFFLINE LOCK</button>
+            </div>
+
+            <button onclick="commitPlatformConfiguration()" class="w-full py-4 bg-gradient-to-r from-gaming-primary to-gaming-secondary text-black font-gaming font-extrabold text-xs rounded-xl shadow shadow-gaming-primary/25 active:scale-95 transition">PERSIST SYSTEMS RECONFIGURATIONS</button>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT REWARDS ADMIN CONTROLLER LOGIC ================= -->
+  <script>
+    let database = null;
+    let isOfflineSandbox = true;
+
+    // Local structures holding synchronized metrics
+    let videosData = {};
+    let bannersData = [];
+    let withdrawalsData = [];
+    let usersData = {};
+    let siteSettings = {};
+    let supportTicketsData = [];
+
+    // Analytics Dashboard line chart holder instance
+    let analyticsChartInstance = null;
+
+    // active sub tab parameters variables
+    let currentWithdrawalFilter = 'pending';
+
+    // Seeding sample structures matching user specs
+    const PLAYLIST_DEMO = [
+      { id: "vid_1", youtubeId: "dQw4w9WgXcQ", title: "GTA 6 Trailer Gameplays detailed overview!", duration: 60, reward: 150, category: "Gaming", thumbnail: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=300&auto=format&fit=crop", isFeatured: true, isSponsored: false, active: true },
+      { id: "vid_2", youtubeId: "pAgnJDJN4VA", title: "Crypto Coin Mining & Bulls Trends 2026", duration: 90, reward: 250, category: "Crypto", thumbnail: "https://images.unsplash.com/photo-1621761191319-c6fb62004040?q=80&w=300&auto=format&fit=crop", isFeatured: true, isSponsored: true, active: true }
+    ];
+
+    const BANNERS_DEMO = [
+      { id: "b_1", title: "DOUBLED REWARDS WEEK", description: "Earn double coins on all video categories today!", imageUrl: "https://images.unsplash.com/photo-1612287230202-1bf1d85d1bdf?q=80&w=800&auto=format&fit=crop", redirectLink: "videos", active: true }
+    ];
+
+    const SETTINGS_DEMO = {
+      maintenanceMode: false,
+      coinToCurrencyRate: 1000,
+      currencySymbol: "Rs.",
+      minWithdrawal: 1000,
+      dailyBonusCoins: 150,
+      appAnnouncement: "Welcome to Watch & Earn admin settings configured!",
+      chatTelegram: "https://t.me/watch_earn_gaming_demo",
+      chatWhatsapp: "https://wa.me/919876543210"
+    };
+
+    // Initialize systems components
+    window.addEventListener('DOMContentLoaded', () => {
+      initDatabaseSync();
+    });
+
+    // --- Dynamic Pin Authorize ---
+    function authorizeAdminPIN() {
+      const pin = document.getElementById('admin-pin-field').value.trim();
+      const storedConfig = localStorage.getItem('FIREBASE_WATCH_AND_EARN_CONFIG');
+      
+      // Pin check (either DB sync has custom pin or defaults value '1234' matches)
+      if (pin === "1234") {
+        document.getElementById('admin-auth-screen').classList.add('hidden');
+        document.getElementById('admin-app-screen').classList.remove('hidden');
+        // complete components loads
+        loadInitialDataViews();
+      } else {
+        alert("Unauthorized administrator access code! Try again.");
+      }
+    }
+
+    function logoutAdminPanel() {
+      document.getElementById('admin-auth-screen').classList.remove('hidden');
+      document.getElementById('admin-app-screen').classList.add('hidden');
+    }
+
+    // --- Database Sync Operations ---
+    function initDatabaseSync() {
+      let storedConfig = localStorage.getItem('FIREBASE_WATCH_AND_EARN_CONFIG');
+      if (!storedConfig) {
+        const defaultFirebaseConfig = {
+          apiKey: "AIzaSyCSgInnq7TAHouOLDm_OWLV5eiCYdDOViw",
+          authDomain: "earning-f0702.firebaseapp.com",
+          databaseURL: "https://earning-f0702-default-rtdb.firebaseio.com",
+          projectId: "earning-f0702",
+          storageBucket: "earning-f0702.firebasestorage.app",
+          messagingSenderId: "237104042249",
+          appId: "1:237104042249:web:7dd97c33d31b4a9e8b83d8",
+          measurementId: "G-Y9201J7Q15"
+        };
+        localStorage.setItem('FIREBASE_WATCH_AND_EARN_CONFIG', JSON.stringify(defaultFirebaseConfig));
+        storedConfig = JSON.stringify(defaultFirebaseConfig);
+      }
+
+      if (storedConfig) {
+        try {
+          const cfg = JSON.parse(storedConfig);
+          if (cfg && cfg.apiKey && cfg.databaseURL) {
+            if (!firebase.apps.length) {
+              firebase.initializeApp(cfg);
+            }
+            database = firebase.database();
+            isOfflineSandbox = false;
+            document.getElementById('db-engine-caption').innerHTML = `<span class="text-gaming-neonGreen"><i class="fa-solid fa-circle-check"></i> Firebase Connected Realtime Cloud Engine Active</span>`;
+            
+            // remote hooks
+            syncWithFirebaseDatabase();
+            return;
+          }
+        } catch (err) {
+          console.error("Firebase Auth linking failed, starting sandbox sync: ", err);
+        }
+      }
+
+      // sandbox fallbk
+      isOfflineSandbox = true;
+      document.getElementById('db-engine-caption').innerHTML = `<span class="text-gaming-neonPink"><i class="fa-solid fa-circle-notch animate-spin"></i> Sandboxed Client Simulator Offline Sandbox</span>`;
+    }
+
+    function syncWithFirebaseDatabase() {
+      database.ref('settings').on('value', sn => {
+        siteSettings = sn.val() ? sn.val() : SETTINGS_DEMO;
+        renderSettingsConfigScreen();
+      });
+
+      database.ref('videos').on('value', sn => {
+        videosData = sn.val() ? sn.val() : {};
+        renderVideosMatrix();
+        calculateDashboardOverview();
+      });
+
+      database.ref('banners').on('value', sn => {
+        bannersData = sn.val() ? Object.values(sn.val()) : BANNERS_DEMO;
+        renderBannersList();
+      });
+
+      database.ref('withdrawals').on('value', sn => {
+        withdrawalsData = sn.val() ? Object.values(sn.val()) : [];
+        renderWithdrawalsClaims();
+        calculateDashboardOverview();
+      });
+
+      database.ref('users').on('value', sn => {
+        usersData = sn.val() ? sn.val() : {};
+        renderUsersMatrix();
+        calculateDashboardOverview();
+      });
+
+      database.ref('supportTickets').on('value', sn => {
+        supportTicketsData = sn.val() ? Object.values(sn.val()) : [];
+        renderSupportTickets();
+      });
+    }
+
+    function loadInitialDataViews() {
+      if (!isOfflineSandbox) return;
+
+      // Sandbox data parsing
+      siteSettings = JSON.parse(localStorage.getItem('W&E_SANDBOX_SETTINGS')) || SETTINGS_DEMO;
+      const vArr = JSON.parse(localStorage.getItem('W&E_SANDBOX_VIDEOS')) || PLAYLIST_DEMO;
+      videosData = {};
+      vArr.forEach(v => videosData[v.id] = v);
+
+      bannersData = BANNERS_DEMO;
+      withdrawalsData = JSON.parse(localStorage.getItem('W&E_SANDBOX_WITHDRAWALS')) || [];
+      usersData = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS')) || {};
+      supportTicketsData = JSON.parse(localStorage.getItem('W&E_SANDBOX_TICKETS')) || [];
+
+      // draws
+      calculateDashboardOverview();
+      renderVideosMatrix();
+      renderBannersList();
+      renderWithdrawalsClaims();
+      renderUsersMatrix();
+      renderSupportTickets();
+      renderSettingsConfigScreen();
+    }
+
+    // --- Tab-to-Tab Sections Switchers ---
+    function switchAdminSection(destId) {
+      const keys = ['dashboard', 'videos', 'banners', 'withdrawals', 'users', 'tickets', 'settings'];
+      keys.forEach(k => {
+        document.getElementById(`section-${k}`).classList.add('hidden');
+        
+        const btn = document.getElementById(`nav-btn-${k}`);
+        if(btn) {
+          btn.className = "w-full py-3.5 px-4 bg-gaming-card hover:bg-[#121824] border border-white/5 text-gaming-textMuted hover:text-white rounded-xl text-left font-gaming font-semibold text-xs flex items-center gap-2.5 transition";
+        }
+      });
+
+      document.getElementById(`section-${destId}`).classList.remove('hidden');
+      const actBtn = document.getElementById(`nav-btn-${destId}`);
+      if(actBtn) {
+        actBtn.className = "w-full py-3.5 px-4 bg-gaming-primary text-black rounded-xl text-left font-gaming font-semibold text-xs flex items-center gap-2.5 transition";
+      }
+
+      // Re-initialize dynamic layouts inside charts
+      if (destId === 'dashboard') {
+        renderNeonDashboardAnalyticsChart();
+      }
+    }
+
+    // --- Metric Gather calculations ---
+    function calculateDashboardOverview() {
+      const uCount = Object.keys(usersData).length;
+      document.getElementById('metric-total-users').textContent = uCount;
+
+      const vCount = Object.values(videosData).filter(v => v.active).length;
+      document.getElementById('metric-active-videos').textContent = vCount;
+
+      const totalPending = withdrawalsData.filter(t => t.status === 'pending').length;
+      const totalAmountRequestedCoins = withdrawalsData.reduce((acc, current) => acc + (current.amount || 0), 0);
+      document.getElementById('metric-total-withdrawals').textContent = totalPending;
+      document.getElementById('metric-total-distributed').textContent = `${totalAmountRequestedCoins} Coins`;
+
+      // Update notifications indicator alerts tags counts
+      const badge = document.getElementById('pending-counter-badge');
+      if (totalPending > 0) {
+        badge.textContent = totalPending;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+
+      // Auto update active dashboard line chart stats
+      renderNeonDashboardAnalyticsChart();
+    }
+
+    // --- Video Stream Deployments ---
+    function submitInjectionVideoSpec() {
+      const param = document.getElementById('vd-yt-id').value.trim();
+      const title = document.getElementById('vd-title').value.trim();
+      const coins = parseInt(document.getElementById('vd-coins').value) || 150;
+      const secs = parseInt(document.getElementById('vd-secs').value) || 60;
+      const cat = document.getElementById('vd-cat').value;
+      const thumb = document.getElementById('vd-thumb').value.trim();
+      const feat = document.getElementById('vd-feat').checked;
+      const spon = document.getElementById('vd-spon').checked;
+
+      if (!param || !title) {
+        alert("Enter YouTube identifiers details and specific title names!");
+        return;
+      }
+
+      // youtube thumbnail address extractor logic helpers
+      let ytId = param;
+      if (param.includes("youtu.be/")) {
+        ytId = param.split("youtu.be/")[1]?.split("?")[0];
+      } else if (param.includes("watch?v=")) {
+        ytId = param.split("watch?v=")[1]?.split("&")[0];
+      }
+
+      const generatedThumb = thumb ? thumb : `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+      const freshVideoKey = "vid_" + Date.now();
+
+      const newVideoPayload = {
+        id: freshVideoKey,
+        youtubeId: ytId,
+        title: title,
+        duration: secs,
+        reward: coins,
+        category: cat,
+        thumbnail: generatedThumb,
+        isFeatured: feat,
+        isSponsored: spon,
+        active: true
+      };
+
+      if (isOfflineSandbox) {
+        const vList = JSON.parse(localStorage.getItem('W&E_SANDBOX_VIDEOS'));
+        vList.push(newVideoPayload);
+        localStorage.setItem('W&E_SANDBOX_VIDEOS', JSON.stringify(vList));
+        alert("Watch Video added successfully (Sandbox Mode)!");
+        loadInitialDataViews();
+      } else {
+        database.ref('videos/' + freshVideoKey).set(newVideoPayload)
+          .then(() => alert("Earning Video deployed successfully!"));
+      }
+
+      // clear injection block fields
+      document.getElementById('vd-yt-id').value = "";
+      document.getElementById('vd-title').value = "";
+      document.getElementById('vd-feat').checked = false;
+      document.getElementById('vd-spon').checked = false;
+    }
+
+    function renderVideosMatrix() {
+      const rowContainer = document.getElementById('admin-video-rows-list');
+      rowContainer.innerHTML = "";
+
+      const videos = Object.values(videosData);
+      if (videos.length === 0) {
+        rowContainer.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gaming-textMuted">No watch reward drops linked yet.</td></tr>`;
+        return;
+      }
+
+      videos.forEach(v => {
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-white/5 hover:bg-black/20";
+        tr.innerHTML = `
+          <td class="p-3">
+            <span class="font-semibold block text-white text-xs">${v.title}</span>
+            <span class="text-[9px] text-gaming-primary block font-bold capitalize mt-1">${v.category}</span>
+          </td>
+          <td class="p-3 font-mono">
+            <div class="text-white">${v.duration} seconds</div>
+            <div class="text-gaming-neonGold font-gaming font-extrabold mt-0.5">+${v.reward} Coins</div>
+          </td>
+          <td class="p-3">
+            <button onclick="toggleVideoRewardActivityStatus('${v.id}')" class="px-3 py-1 bg-black/50 hover:bg-black/80 rounded border uppercase text-[8px] font-bold ${v.active ? 'text-gaming-neonGreen border-gaming-neonGreen/30' : 'text-gaming-neonPink border-gaming-neonPink/30'}">
+              ${v.active ? 'Active' : 'Locked'}
+            </button>
+          </td>
+          <td class="p-3 text-center">
+            <button onclick="triggerVideoEjectionWipe('${v.id}')" class="text-gaming-neonPink hover:text-red-500 font-bold active:scale-90 transition"><i class="fa-solid fa-trash-can text-sm"></i></button>
+          </td>
+        `;
+        rowContainer.appendChild(tr);
+      });
+    }
+
+    function toggleVideoRewardActivityStatus(id) {
+      const vid = videosData[id];
+      if (!vid) return;
+
+      if (isOfflineSandbox) {
+        const vList = JSON.parse(localStorage.getItem('W&E_SANDBOX_VIDEOS'));
+        const index = vList.findIndex(x => x.id === id);
+        if (index !== -1) {
+          vList[index].active = !vList[index].active;
+          localStorage.setItem('W&E_SANDBOX_VIDEOS', JSON.stringify(vList));
+          loadInitialDataViews();
+        }
+      } else {
+        database.ref('videos/' + id + '/active').set(!vid.active);
+      }
+    }
+
+    function triggerVideoEjectionWipe(id) {
+      if (!confirm("Remove selected reward video from users lists?")) return;
+
+      if (isOfflineSandbox) {
+        const vList = JSON.parse(localStorage.getItem('W&E_SANDBOX_VIDEOS'));
+        const f = vList.filter(x => x.id !== id);
+        localStorage.setItem('W&E_SANDBOX_VIDEOS', JSON.stringify(f));
+        loadInitialDataViews();
+      } else {
+        database.ref('videos/' + id).remove();
+      }
+    }
+
+    // --- Slider Banners Controllers ---
+    function submitSliderBanner() {
+      const title = document.getElementById('bn-title').value.trim();
+      const desc = document.getElementById('bn-desc').value.trim();
+      const img = document.getElementById('bn-img').value.trim();
+      const red = document.getElementById('bn-link').value;
+
+      if (!title || !desc || !img) {
+        alert("Fill out full parameters for visual home sliders banners!");
+        return;
+      }
+
+      const freshBannerKey = "bn_" + Date.now();
+      const load = { id: freshBannerKey, title: title, description: desc, imageUrl: img, redirectLink: red, active: true };
+
+      if (isOfflineSandbox) {
+        alert("Banner templates deployment finished (Sandbox Only)!");
+      } else {
+        database.ref('banners/' + freshBannerKey).set(load)
+          .then(() => alert("Alert banner deployed successfully on dashboard!"));
+      }
+
+      document.getElementById('bn-title').value = "";
+      document.getElementById('bn-desc').value = "";
+      document.getElementById('bn-img').value = "";
+    }
+
+    function renderBannersList() {
+      const grid = document.getElementById('admin-banner-cards-grid');
+      grid.innerHTML = "";
+
+      bannersData.forEach(b => {
+        const el = document.createElement('div');
+        el.className = "bg-black/30 w-full rounded-2xl overflow-hidden border border-white/5 flex gap-4 p-3 font-semibold text-xs relative";
+        el.innerHTML = `
+          <div class="relative w-24 h-16 rounded overflow-hidden">
+            <img src="${b.imageUrl}" class="w-full h-full object-cover brightness-50">
+          </div>
+          <div>
+            <h4 class="text-gaming-primary font-gaming tracking-wider">${b.title}</h4>
+            <p class="text-[9px] text-gaming-textMuted leading-normal mt-1 max-w-xs">${b.description}</p>
+          </div>
+        `;
+        grid.appendChild(el);
+      });
+    }
+
+    // --- Withdrawal Request Actions ---
+    function filterRedemptionClaims(status) {
+      const list = ['pending', 'approved', 'rejected'];
+      list.forEach(item => {
+        document.getElementById(`btn-wf-${item}`).className = `px-3 py-1.5 text-[10px] rounded-lg font-bold text-gaming-textMuted`;
+      });
+      document.getElementById(`btn-wf-${status}`).className = `px-3 py-1.5 text-[10px] rounded-lg font-bold bg-gaming-primary text-black`;
+
+      currentWithdrawalFilter = status;
+      renderWithdrawalsClaims();
+    }
+
+    function renderWithdrawalsClaims() {
+      const tbody = document.getElementById('admin-withdrawals-rows');
+      tbody.innerHTML = "";
+
+      const list = withdrawalsData.filter(t => t.status === currentWithdrawalFilter);
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gaming-textMuted">Empty withdrawals log filter ledger.</td></tr>`;
+        return;
+      }
+
+      list.forEach(tx => {
+        const isPenState = tx.status === 'pending';
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-white/5 hover:bg-black/20";
+        tr.innerHTML = `
+          <td class="p-3">
+            <span class="font-bold text-white block text-sm">${tx.username}</span>
+            <span class="text-[9px] text-gaming-textMuted block font-semibold mt-1 font-mono">${tx.upiId||tx.email}</span>
+          </td>
+          <td class="p-3 font-mono font-bold text-gaming-neonGold">
+            ${tx.amount} Coins
+            <span class="text-[9px] text-gaming-textMuted block mt-0.5">Est: ${siteSettings.currencySymbol || "Rs."} ${(tx.amount/(siteSettings.coinToCurrencyRate||1000)).toFixed(1)}</span>
+          </td>
+          <td class="p-3 text-[10px] text-gaming-textMuted font-mono">
+            ${new Date(tx.timestamp).toLocaleString()}
+          </td>
+          <td class="p-3 text-center">
+            ${isPenState ? `
+              <div class="flex gap-2 justify-center">
+                <button onclick="commitRedemptionClearance('${tx.id}', true)" class="px-3 py-1 rounded bg-gaming-neonGreen/10 hover:bg-gaming-neonGreen/30 border border-gaming-neonGreen/30 text-gaming-neonGreen text-[9px] font-bold uppercase transition">Approve</button>
+                <button onclick="commitRedemptionClearance('${tx.id}', false)" class="px-3 py-1 rounded bg-gaming-neonPink/10 hover:bg-gaming-neonPink/30 border border-gaming-neonPink/30 text-gaming-neonPink text-[9px] font-bold uppercase transition">Reject</button>
+              </div>
+            ` : `
+              <span class="text-[9px] uppercase px-2 py-0.5 border rounded opacity-30 ${tx.status==='approved'?'text-gaming-neonGreen border-gaming-neonGreen':'text-gaming-neonPink border-gaming-neonPink'}">${tx.status}</span>
+            `}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function commitRedemptionClearance(txId, approve) {
+      const reason = approve ? "Passed payout validations check." : prompt("Enter rejection explanation notification note for user wallet:");
+      if (!approve && reason === null) return;
+
+      if (isOfflineSandbox) {
+        const full = JSON.parse(localStorage.getItem('W&E_SANDBOX_WITHDRAWALS'));
+        const index = full.findIndex(t => t.id === txId);
+        if (index !== -1) {
+          const targetTx = full[index];
+          targetTx.status = approve ? 'approved' : 'rejected';
+          targetTx.note = reason;
+
+          // return coins back to user balance block if rejected
+          if (!approve) {
+            const users = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
+            if (users[targetTx.uid]) {
+              users[targetTx.uid].coins += targetTx.amount;
+              localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(users));
+            }
+          }
+
+          localStorage.setItem('W&E_SANDBOX_WITHDRAWALS', JSON.stringify(full));
+          alert(`Claim status updated to ${targetTx.status.toUpperCase()}!`);
+          loadInitialDataViews();
+        }
+      } else {
+        database.ref('withdrawals/' + txId).once('value', sn => {
+          const txObj = sn.val();
+          if (txObj) {
+            const statusStr = approve ? 'approved' : 'rejected';
+            database.ref('withdrawals/' + txId + '/status').set(statusStr);
+            database.ref('withdrawals/' + txId + '/note').set(reason);
+
+            if (!approve) {
+              database.ref('users/' + txObj.uid + '/coins').set(firebase.database.ServerValue.increment(txObj.amount));
+            }
+            alert(`Claim successfully completed and recorded.`);
+          }
+        });
+      }
+    }
+
+    // --- Users Table control Operations ---
+    function renderUsersMatrix() {
+      const tbody = document.getElementById('admin-user-rows');
+      tbody.innerHTML = "";
+
+      const list = Object.values(usersData);
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gaming-textMuted">No players registered profiles found.</td></tr>`;
+        return;
+      }
+
+      list.forEach(u => {
+        const isBanned = u.isBanned || false;
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-white/5 hover:bg-black/20 text-xs";
+        tr.innerHTML = `
+          <td class="p-3 font-semibold">
+            <div class="text-white">${u.username} ${u.vipStatus ? '<span class="text-[8px] text-red-500 border border-red-500 bg-red-500/10 px-0.5 rounded">VIP</span>':''}</div>
+            <div class="text-[9px] text-gaming-textMuted mt-1 block">${u.email}</div>
+          </td>
+          <td class="p-3 font-mono">
+            <div class="text-gaming-neonGold font-gaming font-bold">${u.coins || 0} Coins</div>
+            <div class="text-[10px] text-gaming-textMuted mt-0.5">Invite code: ${u.referralCode || "WE-001"}</div>
+          </td>
+          <td class="p-3">
+            <span class="text-white font-mono block">Level ${u.level || 1}</span>
+            <span class="text-[9px] text-gaming-textMuted block font-mono mt-0.5">${u.xp || 0} XP points</span>
+          </td>
+          <td class="p-3 text-center flex items-center gap-2 justify-center py-5">
+            <button onclick="editUserFieldBalancePrompt('${u.uid}')" class="px-2.5 py-1 bg-[#121824] border border-white/10 text-[9px] font-bold text-gaming-primary rounded hover:bg-black/80 uppercase">Edit Coins</button>
+            <button onclick="toggleUserBanStatus('${u.uid}')" class="px-2.5 py-1 rounded text-[9px] font-bold border uppercase transition ${isBanned ? 'bg-gaming-neonPink/20 border-gaming-neonPink/40 text-gaming-neonPink' : 'bg-white/5 border-white/10 text-gaming-textMuted hover:text-white'}">
+              ${isBanned ? 'Banned' : 'Block User'}
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function searchUsersTable() {
+      const val = document.getElementById('user-search-field').value.toLowerCase().trim();
+      const list = document.getElementById('admin-user-rows');
+      const trs = list.children;
+
+      for (let i = 0; i < trs.length; i++) {
+        const cell = trs[i].querySelector('td');
+        if (cell) {
+          if (cell.textContent.toLowerCase().includes(val)) {
+            trs[i].classList.remove('hidden');
+          } else {
+            trs[i].classList.add('hidden');
+          }
+        }
+      }
+    }
+
+    function editUserFieldBalancePrompt(uid) {
+      const u = usersData[uid];
+      if (!u) return;
+      const parsed = parseInt(prompt(`Adjust ${u.username}'s coin bank:`, u.coins || 0));
+      if (isNaN(parsed)) return;
+
+      if (isOfflineSandbox) {
+        const map = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
+        map[uid].coins = parsed;
+        localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(map));
+        loadInitialDataViews();
+      } else {
+        database.ref('users/' + uid + '/coins').set(parsed);
+      }
+    }
+
+    function toggleUserBanStatus(uid) {
+      const u = usersData[uid];
+      if (!u) return;
+
+      const actStr = u.isBanned ? "unban" : "suspend";
+      if (!confirm(`Do you want to ${actStr} player account profile: ${u.username}?`)) return;
+
+      if (isOfflineSandbox) {
+        const map = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
+        map[uid].isBanned = !u.isBanned;
+        localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(map));
+        loadInitialDataViews();
+      } else {
+        database.ref('users/' + uid + '/isBanned').set(!u.isBanned);
+      }
+    }
+
+    // --- Support Tickets Portal Actions ---
+    function renderSupportTickets() {
+      const container = document.getElementById('admin-tickets-container');
+      container.innerHTML = "";
+
+      const tickets = Object.values(supportTicketsData);
+      if (tickets.length === 0) {
+        container.innerHTML = `<p class="text-xs text-gaming-textMuted py-4 text-center">No complaints ticket threads linked.</p>`;
+        return;
+      }
+
+      tickets.sort((a,b) => b.timestamp - a.timestamp);
+
+      tickets.forEach(ticket => {
+        const isResolvedState = ticket.status === 'resolved';
+        const card = document.createElement('div');
+        card.className = "bg-black/30 p-4 rounded-2xl border border-white/5 text-xs space-y-2";
+        card.innerHTML = `
+          <div class="flex items-center justify-between text-[10px] text-gaming-textMuted border-b border-white/5 pb-1.5 font-mono">
+            <span>Ticket UID: ${ticket.id} (${ticket.username})</span>
+            <span class="font-bold uppercase tracking-widest ${isResolvedState?'text-gaming-neonGreen':'text-gaming-neonGold'}">${ticket.status}</span>
+          </div>
+          <p class="text-white/80"><span class="font-bold text-gaming-primary mr-1">User:</span> ${ticket.message}</p>
+          <div class="bg-black/50 p-2.5 rounded-lg border border-white/5 space-y-1.5">
+            <span class="text-[9px] font-bold text-gaming-neonGold uppercase leading-none block">Admin Response:</span>
+            <p class="text-gaming-textMuted text-[11px] leading-relaxed italic">${ticket.reply || "Awaiting reply spec."}</p>
+          </div>
+          ${!isResolvedState ? `
+            <div class="flex gap-2 pt-1 select-none">
+              <button onclick="respondSupportComplaint('${ticket.id}')" class="px-3 py-1.5 bg-gaming-secondary py-1 text-black font-semibold rounded text-[10px] active:scale-95 transition">Send Reply</button>
+              <button onclick="commitTicketResolutionStatus('${ticket.id}')" class="px-3 py-1.5 bg-black/60 rounded border border-[#22c55e]/25 text-gaming-neonGreen text-[10px] font-bold active:scale-95 transition">Resolve Thread</button>
+            </div>
+          ` : ''}
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function respondSupportComplaint(ticketId) {
+      const field = prompt("Write dynamic support respond to player:");
+      if (!field) return;
+
+      if (isOfflineSandbox) {
+        const full = JSON.parse(localStorage.getItem('W&E_SANDBOX_TICKETS'));
+        const index = full.findIndex(t => t.id === ticketId);
+        if (index !== -1) {
+          full[index].reply = field;
+          localStorage.setItem('W&E_SANDBOX_TICKETS', JSON.stringify(full));
+          alert("Ticket reply logged (Sandbox Mode)!");
+          loadInitialDataViews();
+        }
+      } else {
+        database.ref('supportTickets/' + ticketId + '/reply').set(field);
+      }
+    }
+
+    function commitTicketResolutionStatus(ticketId) {
+      if (!confirm("Are you sure you want to mark this complaint resolved?")) return;
+
+      if (isOfflineSandbox) {
+        const full = JSON.parse(localStorage.getItem('W&E_SANDBOX_TICKETS'));
+        const index = full.findIndex(t => t.id === ticketId);
+        if (index !== -1) {
+          full[index].status = 'resolved';
+          localStorage.setItem('W&E_SANDBOX_TICKETS', JSON.stringify(full));
+          alert("Complaint successfully resolved!");
+          loadInitialDataViews();
+        }
+      } else {
+        database.ref('supportTickets/' + ticketId + '/status').set('resolved');
+      }
+    }
+
+    // --- Settings Panel controls logic ---
+    function renderSettingsConfigScreen() {
+      document.getElementById('set-rate').value = siteSettings.coinToCurrencyRate || 1000;
+      document.getElementById('set-sym').value = siteSettings.currencySymbol || "Rs.";
+      document.getElementById('set-min').value = siteSettings.minWithdrawal || 1000;
+      document.getElementById('set-daily').value = siteSettings.dailyBonusCoins || 150;
+      document.getElementById('set-whatsapp').value = siteSettings.chatWhatsapp || "";
+      document.getElementById('set-telegram').value = siteSettings.chatTelegram || "";
+      document.getElementById('set-marquee').value = siteSettings.appAnnouncement || "";
+
+      // emergency triggers class mapping
+      const isMaint = siteSettings.maintenanceMode || false;
+      const btn = document.getElementById('set-maint-btn');
+      if (isMaint) {
+        btn.textContent = "LOCK SYSTEM ACTIVE";
+        btn.className = "px-5 py-2 rounded-xl text-xs font-gaming font-extrabold uppercase bg-red-600 text-white shadow-lg tracking-wider";
+      } else {
+        btn.textContent = "LOCK SYSTEM INACTIVE";
+        btn.className = "px-5 py-2 rounded-xl text-xs font-gaming font-extrabold uppercase bg-gaming-[#121824] border border-white/5 text-gaming-textMuted tracking-wider";
+      }
+    }
+
+    function togglePlatformMaintenanceEmergencySwitch() {
+      const isMaint = siteSettings.maintenanceMode || false;
+      if (isOfflineSandbox) {
+        siteSettings.maintenanceMode = !isMaint;
+        localStorage.setItem('W&E_SANDBOX_SETTINGS', JSON.stringify(siteSettings));
+        loadInitialDataViews();
+      } else {
+        database.ref('settings/maintenanceMode').set(!isMaint);
+      }
+    }
+
+    function commitPlatformConfiguration() {
+      const r = parseInt(document.getElementById('set-rate').value) || 1000;
+      const s = document.getElementById('set-sym').value.trim() || "Rs.";
+      const min = parseInt(document.getElementById('set-min').value) || 1000;
+      const d = parseInt(document.getElementById('set-daily').value) || 150;
+      const w = document.getElementById('set-whatsapp').value.trim();
+      const t = document.getElementById('set-telegram').value.trim();
+      const m = document.getElementById('set-marquee').value.trim();
+
+      const load = {
+        maintenanceMode: siteSettings.maintenanceMode || false,
+        coinToCurrencyRate: r,
+        currencySymbol: s,
+        minWithdrawal: min,
+        dailyBonusCoins: d,
+        chatWhatsapp: w,
+        chatTelegram: t,
+        appAnnouncement: m
+      };
+
+      if (isOfflineSandbox) {
+        localStorage.setItem('W&E_SANDBOX_SETTINGS', JSON.stringify(load));
+        siteSettings = load;
+        alert("Settings persisted in local memory successfully (Sandbox Mode)!");
+        loadInitialDataViews();
+      } else {
+        database.ref('settings').update(load)
+          .then(() => alert("All config revisions applied to client panels in real-time!"));
+      }
+    }
+
+    // --- Dynamic Analytics Chart drawing logic (Chart.js via CDN) ---
+    function renderNeonDashboardAnalyticsChart() {
+      const ctx = document.getElementById('analytics-chart-canvas').getContext('2d');
+      if (!ctx) return;
+
+      if (analyticsChartInstance) {
+        analyticsChartInstance.destroy();
+      }
+
+      // Generate analytic timeline labels
+      const d = new Date();
+      const days = [];
+      const usersDataEst = [];
+      const videoViewsEst = [];
+
+      for (let i = 6; i >= 0; i--) {
+        const past = new Date();
+        past.setDate(d.getDate() - i);
+        days.push(past.toLocaleDateString(undefined, { weekday: 'short' }));
+        
+        // random metrics bounds
+        usersDataEst.push(Math.floor(10 + i * 2.5 + Math.random() * 5));
+        videoViewsEst.push(Math.floor(40 + i * 12.5 + Math.random() * 20));
+      }
+
+      // Build Glowing Neon dataset lines curves
+      analyticsChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: days,
+          datasets: [
+            {
+              label: 'Daily Active Video Playbacks',
+              data: videoViewsEst,
+              borderColor: '#00f2fe',
+              backgroundColor: 'rgba(0, 242, 254, 0.1)',
+              borderWidth: 3,
+              tension: 0.4,
+              fill: true,
+              pointBackgroundColor: '#00f2fe'
+            },
+            {
+              label: 'New Users Registrations',
+              data: usersDataEst,
+              borderColor: '#ff007f',
+              backgroundColor: 'rgba(255, 0, 127, 0.05)',
+              borderWidth: 2,
+              tension: 0.4,
+              fill: true,
+              pointBackgroundColor: '#ff007f'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: { color: '#8b9bb4', font: { family: 'Poppins', size: 10 } }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#8b9bb4', font: { family: 'Poppins', size: 9 } }
+            },
+            y: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#8b9bb4', font: { family: 'Poppins', size: 9 } }
+            }
+          }
+        }
+      });
+    }
+
+  </script>
+</body>
+</html>

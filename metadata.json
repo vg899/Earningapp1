@@ -1,0 +1,6 @@
+{
+  "name": "Watch & Earn Gaming",
+  "description": "A complete mobile-first YouTube watch-to-earn platform with a real-time admin control panel, cash prizes, lucky spin, scratch cards, and referral system.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

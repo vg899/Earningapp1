@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Watch & Earn - Gaming Zone</title>
+  
+  <!-- Icons & Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- CSS Framework & Script Libraries -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Poppins', 'sans-serif'], gaming: ['Orbitron', 'sans-serif'] },
+          colors: {
+            gaming: {
+              dark: '#05070c', card: '#0f131f', primary: '#00f2fe', secondary: '#4facfe',
+              neonPink: '#ff007f', neonGreen: '#39ff14', neonGold: '#ffd700', textMuted: '#8b9bb4'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { background-color: #05070c; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+    .neon-border { border: 1px solid rgba(0, 242, 254, 0.2); box-shadow: 0 0 10px rgba(0, 242, 254, 0.1); }
+    .neon-text { text-shadow: 0 0 8px rgba(0, 242, 254, 0.6); }
+    .neon-gold { text-shadow: 0 0 8px rgba(255, 215, 0, 0.6); }
+    .glass { background: rgba(15, 19, 31, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: #1a2235; border-radius: 4px; }
+    /* Lucky spin transition */
+    #wheel { transition: transform 4s cubic-bezier(0.1, 0.8, 0.1, 1); }
+  </style>
+</head>
+<body class="text-white select-none overflow-x-hidden pb-24">
+
+  <!-- ================= FIREBASE SETTINGS OVERLAY ================= -->
+  <div id="fb-config-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 hidden">
+    <div class="glass w-full max-w-md p-6 rounded-2xl border border-gaming-primary/30 shadow-lg">
+      <h3 class="font-gaming text-xl text-gaming-primary mb-2 text-center tracking-wide"><i class="fa-solid fa-fire text-orange-500 mr-2"></i>FIREBASE LINK SETUP</h3>
+      <p class="text-xs text-gaming-textMuted mb-4 text-center">To sync real-time database, enter your Web SDK details or click Sandbox to run offline.</p>
+      <div class="space-y-3 text-sm">
+        <div><label class="block text-xs mb-1 text-gaming-textMuted">Database URL</label>
+        <input id="cfg-db-url" type="text" placeholder="https://your-db-rtdb.firebaseio.com" class="w-full bg-black/50 border border-white/10 rounded-lg p-2 focus:border-gaming-primary outline-none text-xs text-white"></div>
+        <div><label class="block text-xs mb-1 text-gaming-textMuted">API Key</label>
+        <input id="cfg-api-key" type="password" placeholder="AIzaSy..." class="w-full bg-black/50 border border-white/10 rounded-lg p-2 focus:border-gaming-primary outline-none text-xs text-white"></div>
+        <div><label class="block text-xs mb-1 text-gaming-textMuted">Project ID</label>
+        <input id="cfg-proj-id" type="text" placeholder="your-project-123" class="w-full bg-black/50 border border-white/10 rounded-lg p-2 focus:border-gaming-primary outline-none text-xs text-white"></div>
+        <div><label class="block text-xs mb-1 text-gaming-textMuted">App ID</label>
+        <input id="cfg-app-id" type="text" placeholder="1:1234:web:abcd" class="w-full bg-black/50 border border-white/10 rounded-lg p-2 focus:border-gaming-primary outline-none text-xs text-white"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mt-5">
+        <button onclick="saveFirebaseConfig()" class="bg-gradient-to-r from-gaming-primary to-gaming-secondary py-2.5 rounded-xl font-semibold text-xs text-black active:scale-95 transition">SAVE & SYNC</button>
+        <button onclick="useSandboxEngine()" class="bg-white/10 hover:bg-white/20 py-2.5 rounded-xl text-xs font-semibold active:scale-95 transition">SANDBOX MODE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= AUTH SYSTEM SCREEN ================= -->
+  <div id="auth-screen" class="min-h-screen flex flex-col justify-center px-6 relative py-12">
+    <div class="absolute top-4 right-4 z-10">
+      <button onclick="openFbConfig()" class="bg-gaming-card border border-white/10 px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 text-gaming-primary"><i class="fa-solid fa-gear"></i> Setup DB</button>
+    </div>
+    
+    <div class="text-center mb-10 pt-4">
+      <div class="w-20 h-20 bg-gradient-to-tr from-gaming-primary to-gaming-secondary rounded-3xl mx-auto flex items-center justify-center shadow-lg shadow-gaming-primary/20 mb-4 animate-pulse">
+        <i class="fa-solid fa-play text-black text-3.5xl ml-1"></i>
+      </div>
+      <h1 class="font-gaming text-3xl font-extrabold tracking-wider bg-gradient-to-r from-gaming-primary via-[#a5f3fc] to-gaming-secondary bg-clip-text text-transparent">WATCH & EARN</h1>
+      <p class="text-gaming-textMuted text-xs mt-1">THE ULTRA GAMING REWARDS PLATFORM</p>
+    </div>
+
+    <!-- Login Form -->
+    <div id="login-card" class="glass border border-white/10 rounded-3xl p-6 shadow-2xl space-y-4">
+      <h2 class="font-gaming text-lg tracking-wider text-gaming-primary border-b border-white/5 pb-2"><i class="fa-solid fa-lock mr-2"></i>MEMBER SIGN IN</h2>
+      <div>
+        <label class="text-xs text-gaming-textMuted block mb-1.5">Email / Phone</label>
+        <div class="relative"><i class="fa-solid fa-envelope absolute left-3 top-3.5 text-white/30 text-sm"></i>
+          <input id="login-email" type="email" placeholder="gamer@google.com" value="gamer@gmail.com" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 outline-none text-sm focus:border-gaming-primary transition"></div>
+      </div>
+      <div>
+        <label class="text-xs text-gaming-textMuted block mb-1.5">Password</label>
+        <div class="relative"><i class="fa-solid fa-key absolute left-3 top-3.5 text-white/30 text-sm"></i>
+          <input id="login-pwd" type="password" placeholder="••••••••" value="123456" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 outline-none text-sm focus:border-gaming-primary transition"></div>
+      </div>
+      <button onclick="handleLogin()" class="w-full py-4 rounded-xl font-gaming tracking-wide text-sm font-bold bg-gradient-to-r from-gaming-primary to-gaming-secondary text-black shadow-lg shadow-gaming-primary/20 hover:neon-border transition active:scale-95">LOG IN TO PLAY</button>
+      <p class="text-center text-xs text-gaming-textMuted">Don't have an account? <span onclick="toggleAuthForm(false)" class="text-gaming-primary font-semibold underline cursor-pointer">Register Free</span></p>
+    </div>
+
+    <!-- Register Form -->
+    <div id="register-card" class="glass border border-white/10 rounded-3xl p-6 shadow-2xl space-y-4 hidden">
+      <h2 class="font-gaming text-lg tracking-wider text-gaming-secondary border-b border-white/5 pb-2"><i class="fa-solid fa-user-plus mr-2"></i>CREATE PLAYER ACCOUNT</h2>
+      <div>
+        <label class="text-xs text-gaming-textMuted block mb-1.5">Username</label>
+        <div class="relative"><i class="fa-solid fa-user-ninja absolute left-3 top-3.5 text-white/30 text-sm"></i>
+          <input id="reg-name" type="text" placeholder="NinjaGamer" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 outline-none text-sm focus:border-gaming-secondary transition"></div>
+      </div>
+      <div>
+        <label class="text-xs text-gaming-textMuted block mb-1.5">Email Address</label>
+        <div class="relative"><i class="fa-solid fa-envelope absolute left-3 top-3.5 text-white/30 text-sm"></i>
+          <input id="reg-email" type="email" placeholder="ninja@world.com" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 outline-none text-sm focus:border-gaming-secondary transition"></div>
+      </div>
+      <div>
+        <label class="text-xs text-gaming-textMuted block mb-1.5">Credentials (6+ characters)</label>
+        <div class="relative"><i class="fa-solid fa-key absolute left-3 top-3.5 text-white/30 text-sm"></i>
+          <input id="reg-pwd" type="password" placeholder="••••••••" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 outline-none text-sm focus:border-gaming-secondary transition"></div>
+      </div>
+      <div>
+        <label class="text-xs text-gaming-textMuted block mb-1.5">Referral Code (Optional)</label>
+        <div class="relative"><i class="fa-solid fa-gift absolute left-3 top-3.5 text-white/30 text-sm"></i>
+          <input id="reg-ref" type="text" placeholder="WE-12345" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 outline-none text-sm focus:border-gaming-secondary transition"></div>
+      </div>
+      <button onclick="handleRegister()" class="w-full py-4 rounded-xl font-gaming tracking-wide text-sm font-bold bg-gradient-to-r from-gaming-primary to-gaming-secondary text-black hover:neon-border transition active:scale-95">SIGN UP NOW (+500 Coins)</button>
+      <p class="text-center text-xs text-gaming-textMuted">Already a member? <span onclick="toggleAuthForm(true)" class="text-gaming-primary font-semibold underline cursor-pointer">Log In</span></p>
+    </div>
+  </div>
+
+  <!-- ================= MASTER APP WORKSPACE ================= -->
+  <div id="app-screen" class="relative hidden">
+    
+    <!-- Header bar -->
+    <header class="bg-gaming-dark/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-40 px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div id="u-avatar" class="w-10 h-10 rounded-full border border-gaming-primary/50 overflow-hidden relative" onclick="switchTab('profile')">
+          <img src="https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <h4 id="u-username" class="text-sm font-semibold tracking-wide">Player_One</h4>
+            <span id="u-vip-badge" class="hidden text-[10px] bg-red-600/20 text-red-500 border border-red-500/30 px-1 rounded-sm font-extrabold uppercase scale-90">VIP</span>
+          </div>
+          <div class="flex items-center gap-1 text-[10px] text-gaming-textMuted">
+            <span class="text-gaming-primary font-bold">LVL <span id="u-level">1</span></span>
+            <span>•</span>
+            <span id="u-coins-conversion">Rs. 0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Coin Box & Notification Icon -->
+      <div class="flex items-center gap-3">
+        <div onclick="switchTab('wallet')" class="bg-gaming-card/80 border border-gaming-neonGold/30 px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-neonGold/10 cursor-pointer">
+          <i class="fa-solid fa-coins text-gaming-neonGold text-sm animate-spin-slow"></i>
+          <span id="u-coin-counter" class="text-xs font-bold font-gaming text-gaming-neonGold tracking-wider">500</span>
+        </div>
+        <button onclick="toggleAnnouncements()" class="w-9 h-9 relative flex items-center justify-center bg-gaming-card border border-white/10 rounded-xl cursor-pointer">
+          <i class="fa-solid fa-bell text-white/80"></i>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-gaming-neonPink rounded-full"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Announcement ticker -->
+    <div id="news-marquee" class="bg-gaming-card border-y border-white/5 px-4 py-1.5 text-xs text-gaming-primary overflow-hidden relative whitespace-nowrap hidden">
+      <div class="inline-block animate-[marquee_25s_linear_infinite] whitespace-nowrap">
+        <i class="fa-solid fa-bullhorn mr-2"></i> <span id="marquee-text">Loading event announcements...</span>
+      </div>
+    </div>
+
+    <!-- ================= TAB: HOME ================= -->
+    <main id="tab-home" class="p-4 space-y-5 flex flex-col">
+      <!-- Sliders Hero Banner -->
+      <div class="relative w-full h-44 rounded-2xl overflow-hidden shadow-lg border border-white/5 relative bg-gaming-card">
+        <div id="banner-slider" class="w-full h-full flex transition-transform duration-500">
+          <!-- Dynamic Banners Inserted Here -->
+        </div>
+        <div id="banner-dots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10"></div>
+      </div>
+
+      <!-- Daily Claim Box -->
+      <div class="bg-gradient-to-r from-purple-900/40 via-gaming-card to-[#121824]/80 p-4 rounded-2xl border border-gaming-neonPink/20 flex justify-between items-center bg-gaming-card relative overflow-hidden">
+        <div class="absolute -right-4 -top-4 w-20 h-20 bg-gaming-neonPink/10 rounded-full blur-xl pointer-events-none"></div>
+        <div>
+          <h3 class="font-gaming text-sm text-gaming-neonPink tracking-wider">DAILY CHECK-IN</h3>
+          <p class="text-xs text-gaming-textMuted mt-0.5" id="daily-claim-desc">Claim free daily coin bonus reward</p>
+        </div>
+        <button id="btn-daily-claim" onclick="claimDailyBonus()" class="bg-gradient-to-r from-gaming-neonPink to-pink-500 font-bold px-4 py-2.5 rounded-xl text-xs text-white uppercase shadow-neonPink/20 active:scale-95 transition">CLAIM 150</button>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-gaming-card p-3 rounded-xl border border-white/5">
+          <span class="text-[10px] text-gaming-textMuted uppercase flex items-center gap-1"><i class="fa-solid fa-clock"></i> Today Earning</span>
+          <div class="font-gaming text-lg text-gaming-primary mt-1" id="u-today-earn">0 Coins</div>
+        </div>
+        <div class="bg-gaming-card p-3 rounded-xl border border-white/5">
+          <span class="text-[10px] text-gaming-textMuted uppercase flex items-center gap-1"><i class="fa-solid fa-trophy text-gaming-neonGold"></i> Total Coins Earned</span>
+          <div class="font-gaming text-lg text-gaming-neonGold mt-1" id="u-lifetime-earn">500 Coins</div>
+        </div>
+      </div>
+
+      <!-- XP Gaming Progress -->
+      <div class="bg-gaming-card p-4 rounded-xl border border-white/5 space-y-1.5">
+        <div class="flex justify-between items-center text-xs">
+          <span class="text-gaming-textMuted">CURRENT XP LEVELLING</span>
+          <span class="text-gaming-primary font-bold"><span id="xp-current">0</span> / <span id="xp-target">1000</span> XP</span>
+        </div>
+        <div class="w-full bg-black/60 h-2.5 rounded-full overflow-hidden">
+          <div id="xp-bar" class="bg-gradient-to-r from-gaming-primary to-gaming-secondary h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Recommended/Featured Videos Header -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-gaming tracking-wide text-sm text-gaming-primary flex items-center gap-1.5"><i class="fa-solid fa-fire text-orange-500 animate-pulse"></i> FEATURED EARNERS</h2>
+          <span onclick="switchTab('videos')" class="text-xs text-gaming-textMuted underline cursor-pointer">View All</span>
+        </div>
+        <div id="home-featured-videos" class="grid grid-cols-2 gap-3">
+          <!-- Dynamically populated featured video cards -->
+        </div>
+      </div>
+
+      <!-- Quick Actions Grid -->
+      <div>
+        <h2 class="font-gaming text-sm tracking-wide text-gaming-secondary mb-3"><i class="fa-solid fa-gamepad mr-1.5"></i> GAMING BOOSTER REWARDS</h2>
+        <div class="grid grid-cols-2 gap-3">
+          <div onclick="switchTab('rewards')" class="bg-gaming-card p-3 rounded-2xl border border-white/5 flex items-center gap-3 cursor-pointer active:scale-95 transition">
+            <div class="w-10 h-10 bg-gaming-neonGreen/10 rounded-xl flex items-center justify-center border border-gaming-neonGreen/20"><i class="fa-solid fa-dice text-gaming-neonGreen text-xl"></i></div>
+            <div>
+              <h4 class="text-xs font-semibold">LUCKY SPIN</h4>
+              <p class="text-[9px] text-gaming-textMuted text-left mt-0.5">Win up to 1K</p>
+            </div>
+          </div>
+          <div id="quick-scratch" onclick="switchTab('rewards')" class="bg-gaming-card p-3 rounded-2xl border border-white/5 flex items-center gap-3 cursor-pointer active:scale-95 transition">
+            <div class="w-10 h-10 bg-gaming-neonGold/10 rounded-xl flex items-center justify-center border border-gaming-neonGold/20"><i class="fa-solid fa-ticket text-gaming-neonGold text-xl"></i></div>
+            <div>
+              <h4 class="text-xs font-semibold">SCRATCH CARD</h4>
+              <p class="text-[9px] text-gaming-textMuted text-left mt-0.5">Scrape for surprise</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leaderboard Header Inside Home -->
+      <div class="bg-gaming-card p-4 rounded-2xl border border-white/5">
+        <h3 class="font-gaming text-xs text-gaming-primary tracking-wide mb-3 flex items-center justify-between"><span class="flex items-center gap-1.5"><i class="fa-solid fa-ranking-star"></i> PLATFORM LEADERBOARD</span> <span class="text-[10px] text-gaming-textMuted capitalize">Weekly Rankings</span></h3>
+        <div id="home-loaderboard-list" class="space-y-2 text-sm text-center">
+          <!-- Dynamically Pulled Top 3 Earners -->
+        </div>
+      </div>
+
+    </main>
+
+    <!-- ================= TAB: VIDEOS ================= -->
+    <main id="tab-videos" class="p-4 space-y-4 hidden">
+      <div class="flex items-center justify-between">
+        <h2 class="font-gaming tracking-wide text-sm text-gaming-primary"><i class="fa-brands fa-youtube text-red-600 mr-2"></i>WATCH-TO-EARN PORTAL</h2>
+        <span class="text-xs text-gaming-textMuted">Completing yields cash</span>
+      </div>
+
+      <!-- Category Filter Tabs -->
+      <div class="flex gap-2 overflow-x-auto pb-1 select-none no-scrollbar" id="category-scroller">
+        <!-- Dynamic Category Pills -->
+      </div>
+
+      <!-- Search Video bar -->
+      <div class="relative">
+        <input type="text" id="video-search-input" onkeyup="filterVideos()" placeholder="Search video by gaming titles..." class="w-full bg-gaming-card border border-white/5 rounded-xl py-3 pl-10 pr-4 outline-none text-xs text-white focus:border-gaming-primary">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-white/30 text-sm"></i>
+      </div>
+
+      <!-- Videos Listing -->
+      <div id="video-playlist" class="space-y-4">
+        <!-- Dynamic Video List and Skeletons -->
+      </div>
+    </main>
+
+    <!-- ================= TAB: REWARDS ================= -->
+    <main id="tab-rewards" class="p-4 space-y-6 hidden">
+      <h2 class="font-gaming tracking-wide text-sm text-gaming-primary text-center"><i class="fa-solid fa-wand-magic-sparkles text-gaming-neonGold"></i> LEVEL-UP BONUS BONANZAS</h2>
+
+      <!-- Lucky Spin Wheel Module -->
+      <div class="bg-gaming-card p-4 rounded-2xl border border-white/5 space-y-4 text-center">
+        <div>
+          <h3 class="font-gaming text-sm text-gaming-primary">SUPER LUCKY WHEEL</h3>
+          <p class="text-[10px] text-gaming-textMuted mt-0.5">Spin every 24 hours to win coin packs!</p>
+        </div>
+        
+        <!-- Spin wheel graphics outer container -->
+        <div class="relative w-64 h-64 mx-auto flex items-center justify-center">
+          <div class="absolute -top-1 z-20"><i class="fa-solid fa-location-pin text-gaming-neonPink text-3xl drop-shadow-lg"></i></div>
+          <svg id="wheel" class="w-full h-full" viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="95" fill="#090d14" stroke="#00f2fe" stroke-width="4"></circle>
+            <!-- Sectors created dynamic -->
+          </svg>
+          <button id="spin-trigger" onclick="spinLuckyWheel()" class="absolute w-14 h-14 bg-gradient-to-tr from-gaming-neonPink to-pink-500 rounded-full flex items-center justify-center border-2 border-white text-xs font-gaming font-black shadow-lg shadow-gaming-neonPink/40 text-white z-10 active:scale-95 transition">SPIN</button>
+        </div>
+        <div id="spin-status-msg" class="text-xs text-gaming-textMuted h-4">Click button above to roll!</div>
+      </div>
+
+      <!-- Interactive Scratch Card -->
+      <div class="bg-gaming-card p-4 rounded-2xl border border-white/5 space-y-4 text-center">
+        <div>
+          <h3 class="font-gaming text-sm text-gaming-neonPink">SCRATCH & WIN</h3>
+          <p class="text-[10px] text-gaming-textMuted mt-0.5">Erase the metallic layer to claim hidden treasure.</p>
+        </div>
+        
+        <div class="scratch-container neon-border rounded-xloverflow-hidden select-none">
+          <div class="scratch-underlay">
+            <span class="text-xs text-gaming-textMuted">You Won!</span>
+            <span class="font-gaming text-2xl text-gaming-neonGold font-black" id="scratch-win-amt">+150 Coins</span>
+            <span class="text-[10px] text-gaming-textMuted mt-1">Claimed Successfully</span>
+          </div>
+          <canvas id="scratch-canvas" width="260" height="150" class="shadow-lg"></canvas>
+        </div>
+        <button onclick="resetScratchElement()" id="reset-scratch-btn" class="text-xs text-gaming-primary underline hidden">Get Another Daily Scratch</button>
+      </div>
+
+      <!-- Daily Missions Progress List -->
+      <div class="bg-gaming-card p-4 rounded-2xl border border-white/5 space-y-4">
+        <h3 class="font-gaming text-xs text-gaming-secondary tracking-wide border-b border-white/5 pb-2"><i class="fa-solid fa-tasks mr-1.5"></i> PLANNED MISSIONS</h3>
+        <div id="missions-list" class="space-y-3">
+          <!-- Populated in Javascript logic -->
+        </div>
+      </div>
+    </main>
+
+    <!-- ================= TAB: WALLET ================= -->
+    <main id="tab-wallet" class="p-4 space-y-5 hidden">
+      <div class="bg-gradient-to-tr from-[#00f2fe]/20 to-[#39ff14]/5 p-5 rounded-2xl border border-gaming-primary/30 relative overflow-hidden bg-gaming-card">
+        <span class="text-[10px] text-gaming-textMuted uppercase tracking-wider font-gaming">CLAIMABLE BALANCE</span>
+        <div class="flex items-baseline gap-2 mt-1">
+          <h1 class="text-3xl font-gaming font-extrabold text-white" id="wall-coin-cnt">500</h1>
+          <span class="text-xs text-gaming-textMuted">Coins</span>
+        </div>
+        <div class="text-sm font-semibold text-gaming-neonGreen mt-1" id="wall-conversion-val">Value: Rs. 0.50</div>
+        
+        <div class="flex gap-4 border-t border-white/10 mt-4 pt-4 text-xs text-gaming-textMuted">
+          <div>Today: <span class="text-white font-semibold" id="wall-today-earned">0</span></div>
+          <div>Pending Withdraws: <span class="text-white font-semibold" id="wall-pending-withdraw">0 Coins</span></div>
+        </div>
+      </div>
+
+      <!-- UPI / Paytm/ Withdrawal Panel -->
+      <div class="glass p-5 rounded-2xl border border-white/5 space-y-4">
+        <h3 class="font-gaming text-sm text-gaming-primary tracking-wide"><i class="fa-solid fa-paper-plane mr-1.5"></i> INSTANT UPI CASH-OUT</h3>
+        <p class="text-xs text-gaming-textMuted">1,000 Coins = Rs. 10. Minimum request limit <span id="wall-min-out">Rs. 10 (1000 Coins)</span></p>
+        
+        <div class="space-y-3">
+          <div><label class="block text-xs text-gaming-textMuted mb-1.5">UPI ID (VPA Address) / Email ID</label>
+          <input id="upi-address" type="text" placeholder="yourname@upi" class="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-4 pr-4 outline-none text-xs text-white focus:border-gaming-primary transition"></div>
+          
+          <div><label class="block text-xs text-gaming-textMuted mb-1.5">Amount in Coins</label>
+          <input id="withdraw-coin-input" type="number" onkeyup="updateCoinsEst()" value="1000" class="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-4 pr-12 outline-none text-xs text-white focus:border-gaming-primary font-gaming transition"></div>
+        </div>
+        
+        <div class="bg-black/40 p-3 rounded-lg flex items-center justify-between text-xs">
+          <span>You Will Receive Est:</span>
+          <span class="text-gaming-neonGreen font-bold" id="est-currency-receive">Rs. 10.00</span>
+        </div>
+
+        <button onclick="submitWithdrawPayload()" class="w-full bg-gradient-to-r from-gaming-primary to-gaming-secondary py-3 text-black text-xs font-gaming font-extrabold tracking-wider rounded-xl active:scale-95 shadow shadow-gaming-primary/10 transition">REDEEM NOW VIA UPI</button>
+      </div>
+
+      <!-- Transactions / History Logs -->
+      <div class="space-y-3">
+        <h3 class="font-gaming text-xs text-gaming-secondary tracking-wide flex items-center gap-1.5"><i class="fa-solid fa-clock-rotate-left"></i> WITHDRAWAL REQUEST LOGS</h3>
+        <div id="tx-log-list" class="space-y-2">
+          <!-- Filled in by Javascript -->
+        </div>
+      </div>
+    </main>
+
+    <!-- ================= TAB: PROFILE ================= -->
+    <main id="tab-profile" class="p-4 space-y-5 hidden">
+      <!-- User profile badge display card -->
+      <div class="bg-gaming-card p-4 rounded-2xl border border-white/5 flex gap-4 items-center">
+        <div class="w-14 h-14 rounded-full overflow-hidden border-2 border-gaming-primary shadow-lg shadow-gaming-primary/20">
+          <img id="profile-img" src="https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=200&auto=format&fit=crop" class="w-full h-full object-cover">
+        </div>
+        <div>
+          <h2 class="font-gaming font-extrabold text-sm tracking-wide text-white" id="p-username">SuperGamer</h2>
+          <p class="text-[10px] text-gaming-textMuted mt-0.5" id="p-uid">UID: user_uid_demo</p>
+          <p class="text-[10px] text-gaming-primary mt-1 flex items-center gap-1"><i class="fa-solid fa-shield-halved"></i> Badge Certified: Level <span id="p-level">1</span></p>
+        </div>
+      </div>
+
+      <!-- Referral System Dashboard section -->
+      <div class="bg-gradient-to-r from-teal-950/20 via-gaming-card to-gaming-card p-4 rounded-2xl border border-gaming-primary/20 space-y-3 relative overflow-hidden bg-gaming-card">
+        <div class="absolute right-0 top-0 w-20 h-20 bg-gaming-primary/5 rounded-full blur-xl"></div>
+        <h3 class="font-gaming text-xs text-gaming-primary tracking-wide"><i class="fa-solid fa-users mr-1.5"></i> SHARE REFERRAL PIN</h3>
+        <p class="text-[10px] text-gaming-textMuted">Invite friends. You both instantly earn +100 Coins when they sign up under your personal code!</p>
+        
+        <div class="flex gap-2">
+          <input id="ref-code-display" type="text" readonly value="W&E-123" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-center font-gaming font-bold tracking-widest text-gaming-secondary outline-none">
+          <button onclick="copyReferralCode()" class="bg-gaming-card border border-gaming-primary/30 px-4 rounded-xl text-xs font-semibold text-gaming-primary active:scale-95 transition">COPY</button>
+        </div>
+        
+        <!-- Social shares -->
+        <div class="grid grid-cols-2 gap-2 mt-1 select-none">
+          <a id="share-whatsapp" href="#" target="_blank" class="bg-green-600/20 text-green-400 border border-green-500/30 py-2 rounded-xl text-center text-xs flex items-center justify-center gap-1.5"><i class="fa-brands fa-whatsapp text-lg"></i> WhatsApp</a>
+          <a id="share-telegram" href="#" target="_blank" class="bg-sky-600/20 text-sky-400 border border-sky-500/30 py-2 rounded-xl text-center text-xs flex items-center justify-center gap-1.5"><i class="fa-brands fa-telegram text-lg"></i> Telegram</a>
+        </div>
+      </div>
+
+      <!-- Help support ticketer inside app -->
+      <div class="glass p-4 rounded-2xl border border-white/5 space-y-3">
+        <h3 class="font-gaming text-xs text-gaming-secondary tracking-wide"><i class="fa-solid fa-headset mr-1.5"></i> HELP & CUSTOMER TICKETS</h3>
+        <div class="space-y-3">
+          <textarea id="support-text" rows="2" placeholder="Describe deposit or watch timing claims error details..." class="w-full bg-black/40 border border-white/10 rounded-xl p-3 outline-none text-xs text-white focus:border-gaming-secondary transition"></textarea>
+          <button onclick="submitContactTicket()" class="w-full bg-gaming-card border border-gaming-secondary/40 py-2.5 rounded-xl text-xs font-semibold text-gaming-secondary active:scale-95 transition">SUBMIT COMPLAINT TICKET</button>
+        </div>
+        <div id="u-support-history" class="space-y-2 mt-3 pt-2 border-t border-white/5 max-h-32 overflow-y-auto">
+          <!-- Help entries rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Legal Policies, T&C list links modal -->
+      <div class="bg-gaming-card p-4 rounded-2xl border border-white/5 space-y-3">
+        <h3 class="font-gaming text-xs text-gaming-primary tracking-wide"><i class="fa-solid fa-scale-balanced mr-1.5"></i> LEGAL & INFORMATION POLICIES</h3>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <button onclick="openLegalPolicy('privacy')" class="bg-[#121824] py-3 rounded-lg text-left pl-3 text-gaming-textMuted active:scale-95 transition">Privacy Policy</button>
+          <button onclick="openLegalPolicy('terms')" class="bg-[#121824] py-3 rounded-lg text-left pl-3 text-gaming-textMuted active:scale-95 transition">Terms of Service</button>
+          <button onclick="openLegalPolicy('faq')" class="bg-[#121824] py-3 rounded-lg text-left pl-3 text-gaming-textMuted active:scale-95 transition">Help FAQs</button>
+          <button onclick="openLegalPolicy('copyright')" class="bg-[#121824] py-3 rounded-lg text-left pl-3 text-gaming-textMuted active:scale-95 transition">DMCA Guidelines</button>
+        </div>
+      </div>
+
+      <!-- Log out & Account deletion buttons controls -->
+      <div class="flex flex-col gap-2 pt-2">
+        <button onclick="logoutSession()" class="w-full py-3.5 bg-white/5 text-xs font-semibold rounded-xl text-gaming-textMuted active:scale-95 border border-white/5 transition"><i class="fa-solid fa-right-from-bracket mr-2"></i>SIGN OUT PILOT ACCOUNT</button>
+        <button onclick="triggerAccountDelete()" class="w-full py-3 bg-red-900/10 text-xs font-semibold rounded-xl text-red-400 active:scale-95 border border-red-500/20 transition"><i class="fa-solid fa-trash-can mr-2 text-red-500"></i>DELETE ENTIRE ACCOUNT</button>
+      </div>
+    </main>
+
+    <!-- Native App Bottom Navigation bar tabs -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-[#07090f]/95 border-t border-white/5 grid grid-cols-5 py-2 glass shadow-2xl">
+      <button onclick="switchTab('home')" id="tab-btn-home" class="flex flex-col items-center gap-1.5 text-gaming-primary">
+        <i class="fa-solid fa-house text-lg font-bold"></i><span class="text-[9px] font-semibold tracking-wide">Home</span>
+      </button>
+      <button onclick="switchTab('videos')" id="tab-btn-videos" class="flex flex-col items-center gap-1.5 text-gaming-textMuted hover:text-white">
+        <i class="fa-solid fa-gamepad text-lg"></i><span class="text-[9px] font-semibold tracking-wide">Videos</span>
+      </button>
+      <button onclick="switchTab('rewards')" id="tab-btn-rewards" class="flex flex-col items-center gap-1.5 text-gaming-textMuted hover:text-white">
+        <i class="fa-solid fa-wand-magic-sparkles text-lg"></i><span class="text-[9px] font-semibold tracking-wide">Rewards</span>
+      </button>
+      <button onclick="switchTab('wallet')" id="tab-btn-wallet" class="flex flex-col items-center gap-1.5 text-gaming-textMuted hover:text-white">
+        <i class="fa-solid fa-wallet text-lg"></i><span class="text-[9px] font-semibold tracking-wide">Wallet</span>
+      </button>
+      <button onclick="switchTab('profile')" id="tab-btn-profile" class="flex flex-col items-center gap-1.5 text-gaming-textMuted hover:text-white">
+        <i class="fa-solid fa-user-ninja text-lg"></i><span class="text-[9px] font-semibold tracking-wide">Profile</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ================= ACTIVE DETAILED YOUTUBE PLAYER OVERLAY ================= -->
+  <div id="playing-video-modal" class="fixed inset-0 z-50 bg-[#05070c] hidden flex flex-col justify-between py-6">
+    <header class="px-6 flex items-center justify-between border-b border-white/5 pb-4">
+      <div class="flex items-center gap-3">
+        <i class="fa-brands fa-youtube text-red-600 text-3xl animate-pulse"></i>
+        <div>
+          <h4 class="text-xs font-semibold tracking-wide text-gaming-primary">EARN LOCK ENGAGED</h4>
+          <p class="text-[9px] text-gaming-textMuted">Playback tracks real-time progress</p>
+        </div>
+      </div>
+      <button onclick="closeActiveVideoPopup()" class="w-9 h-9 flex items-center justify-center bg-gaming-card border border-white/10 rounded-xl"><i class="fa-solid fa-xmark text-white/80"></i></button>
+    </header>
+
+    <div class="px-3 flex-grow flex flex-col justify-center space-y-6">
+      <!-- Player Video Iframe wrapper -->
+      <div class="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg border border-white/5 bg-gaming-card">
+        <div id="yt-player-target" class="w-full h-full"></div>
+        <div id="yt-unstarted-mask" class="absolute inset-0 bg-black/90 flex flex-col items-center justify-center p-4 text-center z-10">
+          <i class="fa-solid fa-play text-gaming-primary text-4xl mb-3 animate-bounce"></i>
+          <h4 class="text-xs font-semibold">Ready to Earn</h4>
+          <p class="text-[10px] text-gaming-textMuted mt-1">Click the play button inside the player to trigger verification timer!</p>
+        </div>
+      </div>
+
+      <!-- Watch instructions bar indicator -->
+      <div class="bg-gaming-card p-4 rounded-xl border border-white/5 space-y-3 shadow-lg">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="animate-ping w-2 h-2 rounded-full bg-gaming-primary"></span>
+            <span id="player-timer-lbl" class="text-xs text-gaming-textMuted">Remaining Watch Time:</span>
+          </div>
+          <span id="player-time-countdown" class="font-gaming text-lg text-gaming-primary font-bold">60s</span>
+        </div>
+        
+        <!-- Progress linear line -->
+        <div class="w-full bg-black/60 h-2 rounded-full overflow-hidden">
+          <div id="player-progress-bar" class="h-full bg-gradient-to-r from-gaming-primary to-gaming-secondary rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+
+        <div id="player-warning-msg" class="text-[10px] text-gaming-neonGold text-center h-3 flex items-center justify-center gap-1.5"><i class="fa-solid fa-circle-exclamation text-xs animate-shake"></i> Keep video playing to gain coin tokens!</div>
+      </div>
+    </div>
+
+    <footer class="px-6 space-y-3">
+      <div class="flex justify-between items-center bg-gaming-card py-2.5 px-4 rounded-xl border border-white/5 text-xs text-gaming-textMuted">
+        <span>Completed Coin Yields:</span>
+        <span class="text-gaming-neonGold font-bold font-gaming" id="player-reward-amt">+150 Coins</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ================= POPUP LEGAL POLICY CONTENT IN-APP MODAL ================= -->
+  <div id="legal-policy-modal" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 hidden">
+    <div class="glass w-full max-w-lg rounded-2xl border border-white/10 max-h-[80vh] flex flex-col">
+      <header class="p-4 border-b border-white/5 flex items-center justify-between">
+        <h3 id="legal-title" class="font-gaming text-sm text-gaming-primary tracking-wide">Privacy Policy</h3>
+        <button onclick="closeLegalModal()" class="w-8 h-8 flex items-center justify-center bg-white/5 rounded-lg"><i class="fa-solid fa-xmark text-white/80"></i></button>
+      </header>
+      <div id="legal-content" class="p-5 text-xs text-gaming-textMuted overflow-y-auto space-y-4 leading-relaxed">
+        <!-- Loaded dynamic details -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MAINTENANCE OVERLAY SCREEN ================= -->
+  <div id="maintenance-screen" class="fixed inset-0 bg-[#05070c] z-[9999] flex flex-col justify-center items-center p-6 text-center hidden">
+    <div class="w-24 h-24 bg-gaming-neonGold/10 border border-gaming-neonGold/30 rounded-3xl flex items-center justify-center text-4xl text-gaming-neonGold mb-6 animate-pulse">
+      <i class="fa-solid fa-screwdriver-wrench"></i>
+    </div>
+    <h1 class="font-gaming text-2xl font-black text-white tracking-wider">PLATFORM DOWN FOR REPAIRS</h1>
+    <p class="text-xs text-gaming-textMuted max-w-xs mt-3 leading-relaxed">Our gaming developers are migrating cloud hosts to improve speed. Please check back later. Keep grinding!</p>
+    <a id="m-telegram" href="#" target="_blank" class="mt-8 bg-sky-600/20 text-sky-400 border border-sky-500/30 font-semibold text-xs px-6 py-3 rounded-xl flex items-center gap-2"><i class="fa-brands fa-telegram"></i> CONTACT CHAT SUPPORT</a>
+  </div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+
+  <!-- ================= JAVASCRIPT APP STATE LOGIC ================= -->
+  <script>
+    // Applet database nodes & variables
+    let database = null;
+    let auth = null;
+    let currentUser = null;
+    let isOfflineSandbox = true;
+
+    // Active local structures
+    let videosData = {};
+    let bannersData = [];
+    let siteSettings = {};
+    let usersData = {};
+    let currentThemeColor = 'cyan';
+
+    // Banner indices
+    let bannerIntervalId = null;
+    let activeBannerIndex = 0;
+
+    // Wheel awards mapping
+    const SPIN_AWARDS = [50, 200, 100, 500, 0, 150, 300, 1000];
+
+    // YT Player variables
+    let ytPlayerInstance = null;
+    let currentWatchingVideoId = null;
+    let watchTimeCountdownId = null;
+    let remainingWatchSeconds = 0;
+    let totalRequiredWatchSeconds = 0;
+    let expectedProgressPlaySec = 0;
+    let activeRewardSum = 0;
+
+    // Scratchcard variables
+    let scratchCardState = { scratchedPercent: 0, initialized: false, prize: 100, isClaimed: false };
+
+    // --- Dynamic Content Dictionaries ---
+    const LEGAL_DICTS = {
+      privacy: `
+        <h4 class="text-white font-bold text-sm">1. INFORMATION WE LOG</h4>
+        <p>We preserve registration particulars (email, user handles) and database gaming indicators (current rewards coins ledger, level tier progress, and referred lists). This guarantees account verification and protects from spamming exploits.</p>
+        <h4 class="text-white font-bold text-sm mt-3">2. THIRD PARTY SERVICES</h4>
+        <p>We stream YouTube media using integrated Iframe player structures. Video playbacks obey dynamic Google privacy policy guidelines.</p>
+        <h4 class="text-white font-bold text-sm mt-3">3. SECURITY OF PAYMENTS</h4>
+        <p>Withdrawals processing runs in direct alignment with UPI standard protocols. Financial details remain private, protected from outside network visibility.</p>
+      `,
+      terms: `
+        <h4 class="text-white font-bold text-sm">1. ACCOUNT INTEGRITY</h4>
+        <p>Each profile operates explicitly for one human operator. Multiplex signups or virtual terminal macro execution voids ledger points instantly.</p>
+        <h4 class="text-white font-bold text-sm mt-3">2. FRAUD AND FAKE PLAYBACK DETECTION</h4>
+        <p>We run integrated secure trackers validating active player streams. Bypassing timer requirements, window minimized states, or automation scripts suspends withdrawals instantly.</p>
+        <h4 class="text-white font-bold text-sm mt-3">3. COIN REWARD VALUATION</h4>
+        <p>Earning balances remain within in-app gaming limitations. Rates shift based on dynamic developer evaluations which may update during server restructurings.</p>
+      `,
+      faq: `
+        <div class="space-y-3">
+          <div><h4 class="text-white font-bold">Q: How do I withdraw my earnings?</h4><p>A: Open your Wallet screen, enter a valid WhatsApp VPA/UPI ID, specify the quantity, and click "Redeem via UPI".</p></div>
+          <div><h4 class="text-white font-bold">Q: Timer doesn't tick. Why?</h4><p>A: Ensure you actually watch the video, do not mute, keep the overlay screen on focus, and prevent fast forwarding.</p></div>
+          <div><h4 class="text-white font-bold">Q: How do referral prizes complete?</h4><p>A: Copy your referral code inside the Profile card. When your friends register and type your pin, both of you instantly get +100 Coins!</p></div>
+        </div>
+      `,
+      copyright: `
+        <h4 class="text-white font-bold text-sm">DMCA COMPLIANCE STATEMENT</h4>
+        <p>All video content linked on Watch & Earn is hosted directly on Google YouTube servers. We do not copy, upload, or modify original creations. Copyright issues must seek resolution via direct communication on the YouTube hosting video links.</p>
+      `
+    };
+
+    const PLAYLIST_DEMO = [
+      { id: "vid_1", youtubeId: "dQw4w9WgXcQ", title: "GTA 6 Trailer Gameplays detailed overview!", duration: 60, reward: 150, category: "Gaming", thumbnail: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=300&auto=format&fit=crop", isFeatured: true, isSponsored: false, active: true },
+      { id: "vid_2", youtubeId: "pAgnJDJN4VA", title: "Crypto Coin Mining & Bulls Trends 2026", duration: 90, reward: 250, category: "Crypto", thumbnail: "https://images.unsplash.com/photo-1621761191319-c6fb62004040?q=80&w=300&auto=format&fit=crop", isFeatured: true, isSponsored: true, active: true },
+      { id: "vid_3", youtubeId: "7wtfhZwyrcc", title: "Space Odyssey Odyssey SpaceTech Capsule Space", duration: 45, reward: 100, category: "Tech", thumbnail: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=300&auto=format&fit=crop", isFeatured: false, isSponsored: false, active: true },
+      { id: "vid_4", youtubeId: "V_6TOnH6WGA", title: "Cyberpunk Synth Soundwaves Chill Chill Beats", duration: 120, reward: 300, category: "Music", thumbnail: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?q=80&w=300&auto=format&fit=crop", isFeatured: false, isSponsored: false, active: true }
+    ];
+
+    const BANNERS_DEMO = [
+      { id: "b_1", title: "DOUBLED REWARDS WEEK", description: "Earn double coins on all video categories today!", imageUrl: "https://images.unsplash.com/photo-1612287230202-1bf1d85d1bdf?q=80&w=800&auto=format&fit=crop", redirectLink: "videos" },
+      { id: "b_2", title: "LUCKY SPIN WHEEL GOLD", description: "Earn up to 1000 Coins in a single spin tier!", imageUrl: "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=800&auto=format&fit=crop", redirectLink: "rewards" }
+    ];
+
+    const SETTINGS_DEMO = {
+      maintenanceMode: false,
+      coinToCurrencyRate: 1000,
+      currencySymbol: "Rs.",
+      minWithdrawal: 1000,
+      dailyBonusCoins: 150,
+      appAnnouncement: "🎮 Welcome to Watch & Earn Earning Hub! Instant cash withdrawal requests open 24/7!",
+      chatTelegram: "https://t.me/watch_earn_gaming_demo",
+      chatWhatsapp: "https://wa.me/919876543210"
+    };
+
+    // Initialize application systems on load
+    window.addEventListener('DOMContentLoaded', () => {
+      initDatabaseEngine();
+    });
+
+    // --- Core Database Engine Routing ---
+    function initDatabaseEngine() {
+      let storedConfig = localStorage.getItem('FIREBASE_WATCH_AND_EARN_CONFIG');
+      if (!storedConfig) {
+        const defaultFirebaseConfig = {
+          apiKey: "AIzaSyCSgInnq7TAHouOLDm_OWLV5eiCYdDOViw",
+          authDomain: "earning-f0702.firebaseapp.com",
+          databaseURL: "https://earning-f0702-default-rtdb.firebaseio.com",
+          projectId: "earning-f0702",
+          storageBucket: "earning-f0702.firebasestorage.app",
+          messagingSenderId: "237104042249",
+          appId: "1:237104042249:web:7dd97c33d31b4a9e8b83d8",
+          measurementId: "G-Y9201J7Q15"
+        };
+        localStorage.setItem('FIREBASE_WATCH_AND_EARN_CONFIG', JSON.stringify(defaultFirebaseConfig));
+        storedConfig = JSON.stringify(defaultFirebaseConfig);
+      }
+
+      if (storedConfig) {
+        try {
+          const cfg = JSON.parse(storedConfig);
+          if (cfg && cfg.apiKey && cfg.databaseURL) {
+            if (!firebase.apps.length) {
+              firebase.initializeApp(cfg);
+            }
+            database = firebase.database();
+            auth = firebase.auth();
+            isOfflineSandbox = false;
+            console.log("Firebase Database link active!");
+            // Hook remote settings monitor
+            monitorRealtimeSettings();
+            return;
+          }
+        } catch (e) {
+          console.error("Firebase startup failed, falling back to sandbox:", e);
+        }
+      }
+      
+      // Fallback Engine
+      useSandboxEngine();
+    }
+
+    function monitorRealtimeSettings() {
+      database.ref('settings').on('value', snap => {
+        const val = snap.val();
+        siteSettings = val ? val : SETTINGS_DEMO;
+        applySettingsToLayout();
+      });
+
+      database.ref('videos').on('value', snap => {
+        const val = snap.val();
+        videosData = val ? val : {};
+        if (Object.keys(videosData).length === 0) {
+          // prefill demo data in database reference if blank
+          PLAYLIST_DEMO.forEach(v => { database.ref('videos/' + v.id).set(v); });
+        }
+        renderVideosScreen();
+        renderHomeFeaturedVideos();
+      });
+
+      database.ref('banners').on('value', snap => {
+        const val = snap.val();
+        bannersData = val ? Object.values(val) : BANNERS_DEMO;
+        renderHomeBannersSlider();
+      });
+
+      // Hook Auth Observer
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          // Monitor specific user node
+          database.ref('users/' + user.uid).on('value', uSnap => {
+            const uData = uSnap.val();
+            if (uData) {
+              if (uData.isBanned) {
+                alert("This account is currently banned for violating platform rules.");
+                logoutSession();
+                return;
+              }
+              currentUser = uData;
+              syncUILayout();
+            } else {
+              // Create user nodes dynamically in DB
+              const skeletonUser = {
+                uid: user.uid,
+                username: user.email.split('@')[0],
+                email: user.email,
+                coins: 500,
+                xp: 0,
+                level: 1,
+                joinedDate: new Date().toISOString().substring(0, 10),
+                isBanned: false,
+                todayEarnings: 0,
+                lifetimeEarnings: 500,
+                pendingWithdrawals: 0,
+                referralCode: "WE-" + Math.floor(10000 + Math.random() * 90000),
+                streakCount: 1,
+                lastDailyClaim: 0,
+                vipStatus: false,
+                watchedVideos: {}
+              };
+              database.ref('users/' + user.uid).set(skeletonUser);
+            }
+          });
+        } else {
+          currentUser = null;
+          showAuthScreen();
+        }
+      });
+    }
+
+    function useSandboxEngine() {
+      isOfflineSandbox = true;
+      console.log("Sandbox Offline Simulator triggered!");
+      
+      // Seed storage structural mock
+      if (!localStorage.getItem('W&E_SANDBOX_USERS')) {
+        localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify({}));
+      }
+      if (!localStorage.getItem('W&E_SANDBOX_VIDEOS')) {
+        localStorage.setItem('W&E_SANDBOX_VIDEOS', JSON.stringify(PLAYLIST_DEMO));
+      }
+      if (!localStorage.getItem('W&E_SANDBOX_SETTINGS')) {
+        localStorage.setItem('W&E_SANDBOX_SETTINGS', JSON.stringify(SETTINGS_DEMO));
+      }
+      if (!localStorage.getItem('W&E_SANDBOX_WITHDRAWALS')) {
+        localStorage.setItem('W&E_SANDBOX_WITHDRAWALS', JSON.stringify([]));
+      }
+      if (!localStorage.getItem('W&E_SANDBOX_TICKETS')) {
+        localStorage.setItem('W&E_SANDBOX_TICKETS', JSON.stringify([]));
+      }
+
+      // Fetch
+      siteSettings = JSON.parse(localStorage.getItem('W&E_SANDBOX_SETTINGS'));
+      const videoList = JSON.parse(localStorage.getItem('W&E_SANDBOX_VIDEOS'));
+      videosData = {};
+      videoList.forEach(v => { videosData[v.id] = v; });
+      bannersData = BANNERS_DEMO;
+
+      applySettingsToLayout();
+      renderHomeBannersSlider();
+      renderVideosScreen();
+      renderHomeFeaturedVideos();
+
+      // Check active cache token log-in
+      const activeUserSessionToken = localStorage.getItem('W&E_ACTIVE_USER_SESSION');
+      if (activeUserSessionToken) {
+        const usersMap = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
+        const target = usersMap[activeUserSessionToken];
+        if (target) {
+          currentUser = target;
+          syncUILayout();
+        } else {
+          showAuthScreen();
+        }
+      } else {
+        showAuthScreen();
+      }
+
+      // Hide modal helper
+      closeFbConfig();
+    }
+
+    // --- Admin DB setters ---
+    function openFbConfig() {
+      document.getElementById('fb-config-modal').classList.remove('hidden');
+    }
+    function closeFbConfig() {
+      document.getElementById('fb-config-modal').classList.add('hidden');
+    }
+
+    function saveFirebaseConfig() {
+      const url = document.getElementById('cfg-db-url').value.trim();
+      const apiKey = document.getElementById('cfg-api-key').value.trim();
+      const projId = document.getElementById('cfg-proj-id').value.trim();
+      const appId = document.getElementById('cfg-app-id').value.trim();
+
+      if (!url || !apiKey || !projId || !appId) {
+        alert("Fill in all config parameters to link real Firebase!");
+        return;
+      }
+
+      const cfgObj = {
+        apiKey: apiKey,
+        authDomain: `${projId}.firebaseapp.com`,
+        databaseURL: url,
+        projectId: projId,
+        storageBucket: `${projId}.appspot.com`,
+        appId: appId
+      };
+
+      localStorage.setItem('FIREBASE_WATCH_AND_EARN_CONFIG', JSON.stringify(cfgObj));
+      initDatabaseEngine();
+      location.reload();
+    }
+
+    function applySettingsToLayout() {
+      // announcements banner display
+      if (siteSettings.appAnnouncement) {
+        document.getElementById('news-marquee').classList.remove('hidden');
+        document.getElementById('marquee-text').textContent = siteSettings.appAnnouncement;
+      } else {
+        document.getElementById('news-marquee').classList.add('hidden');
+      }
+
+      if (siteSettings.maintenanceMode) {
+        document.getElementById('maintenance-screen').classList.remove('hidden');
+        document.getElementById('m-telegram').href = siteSettings.chatTelegram || "#";
+      } else {
+        document.getElementById('maintenance-screen').classList.add('hidden');
+      }
+
+      document.getElementById('wall-min-out').textContent = `${siteSettings.currencySymbol || "Rs."} ${(siteSettings.minWithdrawal || 1000) / (siteSettings.coinToCurrencyRate || 1000)} (${siteSettings.minWithdrawal} Coins)`;
+    }
+
+    // --- UI Screen Management ---
+    function showAuthScreen() {
+      document.getElementById('auth-screen').classList.remove('hidden');
+      document.getElementById('app-screen').classList.add('hidden');
+    }
+
+    function showAppScreen() {
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('app-screen').classList.remove('hidden');
+    }
+
+    function toggleAuthForm(isLogin) {
+      if (isLogin) {
+        document.getElementById('login-card').classList.remove('hidden');
+        document.getElementById('register-card').classList.add('hidden');
+      } else {
+        document.getElementById('login-card').classList.add('hidden');
+        document.getElementById('register-card').classList.remove('hidden');
+      }
+    }
+
+    // --- Authentication Actions ---
+    function handleLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-pwd').value.trim();
+
+      if (!email || !password) {
+        alert("Insert both credentials fully!");
+        return;
+      }
+
+      if (isOfflineSandbox) {
+        const uMap = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
+        let matchedUid = null;
+        for (let uid in uMap) {
+          if (uMap[uid].email === email) { matchedUid = uid; break; }
+        }
+
+        if (matchedUid) {
+          localStorage.setItem('W&E_ACTIVE_USER_SESSION', matchedUid);
+          currentUser = uMap[matchedUid];
+          syncUILayout();
+        } else {
+          // If fresh sandbox start, auto create profile for test instant log
+          const newSandboxUid = "demo_u_" + Date.now();
+          const pName = email.split('@')[0];
+          const freshUserObj = {
+            uid: newSandboxUid, username: pName, email: email, coins: 500, xp: 0, level: 1,
+            joinedDate: new Date().toISOString().substring(0, 10), isBanned: false, todayEarnings: 0,
+            lifetimeEarnings: 500, pendingWithdrawals: 0, referralCode: "WE-" + Math.floor(10000 + Math.random() * 90000),
+            streakCount: 1, lastDailyClaim: 0, watchedVideos: {}, vipStatus: false
+          };
+          uMap[newSandboxUid] = freshUserObj;
+          localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(uMap));
+          localStorage.setItem('W&E_ACTIVE_USER_SESSION', newSandboxUid);
+          currentUser = freshUserObj;
+          syncUILayout();
+        }
+      } else {
+        auth.signInWithEmailAndPassword(email, password)
+          .catch(err => alert("Login Credential Error: " + err.message));
+      }
+    }
+
+    function handleRegister() {
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const pwd = document.getElementById('reg-pwd').value.trim();
+      const refIn = document.getElementById('reg-ref').value.trim();
+
+      if (!name || !email || pwd.length < 6) {
+        alert("Verify email is standard & credentials length is at least 6 characters.");
+        return;
+      }
+
+      if (isOfflineSandbox) {
+        const uMap = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
+        for (let key in uMap) {
+          if (uMap[key].email === email) { alert("Registered profile email exists!"); return;}
+        }
+
+        const newSandboxUid = "demo_u_" + Date.now();
+        const inviteeBenefit = refIn ? 100 : 0;
+        const freshUserObj = {
+          uid: newSandboxUid, username: name, email: email, coins: 500 + inviteeBenefit, xp: 0, level: 1,
+          joinedDate: new Date().toISOString().substring(0, 10), isBanned: false, todayEarnings: 0,
+          lifetimeEarnings: 500 + inviteeBenefit, pendingWithdrawals: 0, referralCode: "WE-" + Math.floor(10000 + Math.random() * 90000),
+          streakCount: 1, lastDailyClaim: 0, watchedVideos: {}, vipStatus: false, referredBy: refIn
+        };
+
+        // apply inviter rewards in sandbox
+        if (refIn) {
+          for (let ukey in uMap) {
+            if (uMap[ukey].referralCode === refIn) {
+              uMap[ukey].coins += 100;
+              uMap[ukey].lifetimeEarnings += 100;
+            }
+          }
+        }
+
+        uMap[newSandboxUid] = freshUserObj;
+        localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(uMap));
+        localStorage.setItem('W&E_ACTIVE_USER_SESSION', newSandboxUid);
+        currentUser = freshUserObj;
+        syncUILayout();
+      } else {
+        auth.createUserWithEmailAndPassword(email, pwd)
+          .then(cred => {
+            const inviteeBenefit = refIn ? 100 : 0;
+            const userRefCode = "WE-" + Math.floor(10000 + Math.random() * 90000);
+            const refDetails = {
+              uid: cred.user.uid, username: name, email: email, coins: 500 + inviteeBenefit, xp: 0, level: 1,
+              joinedDate: new Date().toISOString().substring(0, 10), isBanned: false, todayEarnings: 0,
+              lifetimeEarnings: 500 + inviteeBenefit, pendingWithdrawals: 0, referralCode: userRefCode,
+              streakCount: 1, lastDailyClaim: 0, watchedVideos: {}, vipStatus: false, referredBy: refIn
+            };
+
+            // apply relative referrals
+            if (refIn) {
+              database.ref('users').orderByChild('referralCode').equalTo(refIn).once('value', sn => {
+                sn.forEach(chi => {
+                  database.ref('users/' + chi.key + '/coins').set(firebase.database.ServerValue.increment(100));
+                  database.ref('users/' + chi.key + '/lifetimeEarnings').set(firebase.database.ServerValue.increment(100));
+                });
+              });
+            }
+
+            database.ref('users/' + cred.user.uid).set(refDetails);
+          })
+          .catch(err => alert("Sign up error: " + err.message));
+      }
+    }
+
+    function logoutSession() {
+      if (isOfflineSandbox) {
+        localStorage.removeItem('W&E_ACTIVE_USER_SESSION');
+        currentUser = null;
+        showAuthScreen();
+      } else {
+        auth.signOut();
+      }
+    }
+
+    // --- Core Realtime Interface Rendering Layout ---
+    function syncUILayout() {
+      if (!currentUser) return;
+      showAppScreen();
+
+      // headers
+      document.getElementById('u-username').textContent = currentUser.username;
+      document.getElementById('u-level').textContent = currentUser.level || 1;
+      
+      const coins = currentUser.coins || 0;
+      document.getElementById('u-coin-counter').textContent = coins;
+      document.getElementById('wall-coin-cnt').textContent = coins;
+      
+      const multiplier = siteSettings.coinToCurrencyRate || 1000;
+      const currencySymbol = siteSettings.currencySymbol || "Rs.";
+      const convEst = (coins / multiplier).toFixed(2);
+      
+      document.getElementById('u-coins-conversion').textContent = `${currencySymbol} ${convEst}`;
+      document.getElementById('wall-conversion-val').textContent = `Est value: ${currencySymbol} ${convEst}`;
+
+      // home states
+      document.getElementById('u-today-earn').textContent = `${currentUser.todayEarnings || 0} Coins`;
+      document.getElementById('u-lifetime-earn').textContent = `${currentUser.lifetimeEarnings || 0} Coins`;
+      document.getElementById('wall-today-earned').textContent = currentUser.todayEarnings || 0;
+
+      // level xp bars
+      const xp = currentUser.xp || 0;
+      const targetXp = (currentUser.level || 1) * 1000;
+      document.getElementById('xp-current').textContent = xp;
+      document.getElementById('xp-target').textContent = targetXp;
+      const pCent = Math.min((xp / targetXp) * 100, 100);
+      document.getElementById('xp-bar').style.width = pCent + '%';
+
+      // daily check in checks
+      const lastClaim = currentUser.lastDailyClaim || 0;
+      const elapsed = Date.now() - lastClaim;
+      if (elapsed < 86400000) {
+        const hoursLeft = Math.ceil((86400000 - elapsed) / 3600000);
+        document.getElementById('btn-daily-claim').disabled = true;
+        document.getElementById('btn-daily-claim').textContent = `LOCKED (${hoursLeft}H)`;
+        document.getElementById('btn-daily-claim').className = "bg-white/10 text-gaming-textMuted px-4 py-2.5 rounded-xl text-xs uppercase cursor-not-allowed";
+        document.getElementById('daily-claim-desc').textContent = "Next reward available shortly!";
+      } else {
+        document.getElementById('btn-daily-claim').disabled = false;
+        document.getElementById('btn-daily-claim').textContent = `CLAIM 150`;
+        document.getElementById('btn-daily-claim').className = "bg-gradient-to-r from-gaming-neonPink to-pink-500 font-bold px-4 py-2.5 rounded-xl text-xs text-white uppercase shadow-neonPink/20 active:scale-95 transition";
+        document.getElementById('daily-claim-desc').textContent = "Claim free daily coin bonus reward";
+      }
+
+      // VIP display
+      if (currentUser.vipStatus) {
+        document.getElementById('u-vip-badge').classList.remove('hidden');
+      } else {
+        document.getElementById('u-vip-badge').classList.add('hidden');
+      }
+
+      // profiles
+      document.getElementById('p-username').textContent = currentUser.username;
+      document.getElementById('p-uid').textContent = "UID: " + currentUser.uid;
+      document.getElementById('p-level').textContent = currentUser.level || 1;
+      document.getElementById('ref-code-display').value = currentUser.referralCode || "";
+
+      // Whatsapp / Telegram link generators
+      const shareMsg = `Join Watch & Earn Gaming Zone, complete video watch tasks, and withdraw instant cash prizes! Use my referral code: ${currentUser.referralCode} to get free coins instantly! Join at ${location.href}`;
+      document.getElementById('share-whatsapp').href = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareMsg)}`;
+      document.getElementById('share-telegram').href = `https://t.me/share/url?url=${encodeURIComponent(location.href)}&text=${encodeURIComponent(shareMsg)}`;
+
+      // Load items
+      renderMissionsUI();
+      renderWithdrawLogsHistory();
+      renderContactSupportLogs();
+      fetchLeaderboardsSync();
+    }
+
+    // --- Tab Switch System ---
+    function switchTab(tabId) {
+      const tabIds = ['home', 'videos', 'rewards', 'wallet', 'profile'];
+      tabIds.forEach(id => {
+        document.getElementById(`tab-${id}`).classList.add('hidden');
+        document.getElementById(`tab-btn-${id}`).className = "flex flex-col items-center gap-1.5 text-gaming-textMuted hover:text-white";
+      });
+
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      document.getElementById(`tab-btn-${tabId}`).className = "flex flex-col items-center gap-1.5 text-gaming-primary";
+    }
+
+    // --- Dynamic Slider Banners Rendering ---
+    function renderHomeBannersSlider() {
+      const container = document.getElementById('banner-slider');
+      const dotsCont = document.getElementById('banner-dots');
+      container.innerHTML = "";
+      dotsCont.innerHTML = "";
+
+      if (bannersData.length === 0) {
+        bannersData = BANNERS_DEMO;
+      }
+
+      bannersData.forEach((bn, idx) => {
+        const slide = document.createElement('div');
+        slide.className = "w-full h-full flex-shrink-0 relative cursor-pointer";
+        slide.onclick = () => { switchTab(bn.redirectLink || 'videos'); };
+        
+        slide.innerHTML = `
+          <img src="${bn.imageUrl}" class="w-full h-full object-cover brightness-50">
+          <div class="absolute inset-0 bg-gradient-to-t from-gaming-dark via-transparent to-transparent flex flex-col justify-end p-4">
+            <h3 class="font-gaming text-sm font-bold tracking-wider text-gaming-primary">${bn.title}</h3>
+            <p class="text-[10px] text-gaming-textMuted mt-0.5 max-w-xs leading-normal">${bn.description}</p>
+          </div>
+        `;
+        container.appendChild(slide);
+
+        // Dot
+        const dot = document.createElement('span');
+        dot.className = `w-1.5 h-1.5 rounded-full transition-all duration-300 ${idx === 0 ? 'bg-gaming-primary w-4' : 'bg-white/30'}`;
+        dotsCont.appendChild(dot);
+      });
+
+      // Auto Slider Loop
+      if (bannerIntervalId) clearInterval(bannerIntervalId);
+      activeBannerIndex = 0;
+      bannerIntervalId = setInterval(() => {
+        activeBannerIndex = (activeBannerIndex + 1) % bannersData.length;
+        container.style.transform = `translateX(-${activeBannerIndex * 100}%)`;
+        
+        const dots = dotsCont.children;
+        for (let i = 0; i < dots.length; i++) {
+          dots[i].className = `w-1.5 h-1.5 rounded-full transition-all duration-300 ${i === activeBannerIndex ? 'bg-gaming-primary w-4' : 'bg-white/30'}`;
+        }
+      }, 5000);
+    }
+
+    // --- Home Listings & Realtime Rankings ---
+    function renderHomeFeaturedVideos() {
+      const container = document.getElementById('home-featured-videos');
+      container.innerHTML = "";
+
+      const activeList = Object.values(videosData).filter(v => v.active && v.isFeatured);
+      if (activeList.length === 0) {
+        container.innerHTML = `<div class="col-span-2 text-center py-4 text-xs text-gaming-textMuted">Fresh featured drops landing soon.</div>`;
+        return;
+      }
+
+      activeList.slice(0, 4).forEach(v => {
+        const el = document.createElement('div');
+        el.className = "bg-gaming-card rounded-2xl overflow-hidden border border-white/5 shadow-xl relative cursor-pointer active:scale-95 transition flex flex-col justify-between h-48";
+        el.onclick = () => { launchVideoGameplayPlayer(v.id); };
+        
+        el.innerHTML = `
+          <div class="relative aspect-video">
+            <img src="${v.thumbnail || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=200'}" class="w-full h-full object-cover">
+            <span class="absolute top-2 left-2 text-[8px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-gaming-neonPink/90 text-white shadow-neonPink/20"><i class="fa-solid fa-fire"></i> Featured</span>
+            <span class="absolute bottom-2 right-2 text-[8px] bg-black/80 text-white px-1.5 py-0.5 rounded-md font-mono">${v.duration}s</span>
+          </div>
+          <div class="p-2 flex flex-col justify-between flex-grow">
+            <h4 class="text-[10px] font-bold tracking-wide line-clamp-2">${v.title}</h4>
+            <div class="flex justify-between items-center mt-1 border-t border-white/5 pt-1.5">
+              <span class="text-[8px] text-gaming-primary">${v.category}</span>
+              <div class="bg-gaming-neonGold/10 text-gaming-neonGold border border-gaming-neonGold/30 text-[9px] font-gaming px-1.5 py-0.5 rounded flex items-center gap-1 font-bold">
+                <i class="fa-solid fa-coins animate-spin-slow"></i> +${v.reward}
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    // --- Leaderboard Sync ---
+    function fetchLeaderboardsSync() {
+      const container = document.getElementById('home-loaderboard-list');
+      container.innerHTML = "";
+
+      let usersArr = [];
+      if (isOfflineSandbox) {
+        const uMap = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
+        usersArr = Object.values(uMap);
+      }
+
+      // Sort by coins
+      usersArr.sort((a, b) => (b.coins || 0) - (a.coins || 0));
+
+      if (usersArr.length === 0) {
+        // dummy seeds if empty sandbox
+        usersArr = [
+          { username: "ApexOverlord_YT", coins: 14500, level: 8 },
+          { username: "CryptoSniper", coins: 9200, level: 5 },
+          { username: "NeonNinja_07", coins: 7100, level: 4 }
+        ];
+      }
+
+      usersArr.slice(0, 3).forEach((us, idx) => {
+        const medalColors = ['text-gaming-neonGold', 'text-slate-300', 'text-amber-600'];
+        const medals = ['🥇', '🥈', '🥉'];
+        const card = document.createElement('div');
+        card.className = "flex items-center justify-between p-2.5 bg-black/40 rounded-xl border border-white/5 text-xs";
+        card.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="text-base">${medals[idx]}</span>
+            <div>
+              <div class="font-semibold text-left ${medalColors[idx]}">${us.username}</div>
+              <div class="text-[9px] text-gaming-textMuted text-left mt-0.5">Player level ${us.level || 1}</div>
+            </div>
+          </div>
+          <span class="font-gaming font-bold text-gaming-neonGold flex items-center gap-1">
+            <i class="fa-solid fa-coins text-xs"></i> ${us.coins}
+          </span>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // --- Tab Watch Gameplay Player Section ---
+    let activeFilterCategory = "All";
+    function renderVideosScreen() {
+      const container = document.getElementById('video-playlist');
+      const scroller = document.getElementById('category-scroller');
+      container.innerHTML = "";
+
+      // Render category tabs scrolling header
+      const categories = ["All", "Gaming", "Music", "Crypto", "Entertainment", "Tech", "Sponsored"];
+      if (scroller.children.length === 0) {
+        categories.forEach(cat => {
+          const pill = document.createElement('button');
+          pill.id = `cat-${cat}`;
+          pill.onclick = () => { selectCategoryFilter(cat); };
+          pill.className = `px-4 py-2 text-xs rounded-xl font-semibold border transition ${cat === activeFilterCategory ? 'bg-gaming-primary border-gaming-primary text-black' : 'bg-gaming-card border-white/5 text-gaming-textMuted'}`;
+          pill.textContent = cat;
+          scroller.appendChild(pill);
+        });
+      }
+
+      let activeVideos = Object.values(videosData).filter(v => v.active);
+
+      if (activeFilterCategory !== "All") {
+        activeVideos = activeVideos.filter(v => v.category === activeFilterCategory);
+      }
+
+      if (activeVideos.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-10 bg-gaming-card rounded-2xl border border-white/5 p-4">
+            <i class="fa-regular fa-folder-open text-3xl text-gaming-textMuted mb-2"></i>
+            <p class="text-xs text-gaming-textMuted">No videos available under ${activeFilterCategory}</p>
+          </div>
+        `;
+        return;
+      }
+
+      activeVideos.forEach(v => {
+        const watched = currentUser && currentUser.watchedVideos && currentUser.watchedVideos[v.id];
+        const opacityClass = watched ? 'opacity-60 bg-black/60' : 'bg-gaming-card';
+        const el = document.createElement('div');
+        el.className = `p-3 rounded-2xl border border-white/5 shadow-xl flex gap-3 relative cursor-pointer active:scale-95 transition flex-col sm:flex-row ${opacityClass}`;
+        el.onclick = () => { launchVideoGameplayPlayer(v.id); };
+
+        el.innerHTML = `
+          <div class="relative w-full sm:w-36 aspect-video rounded-xl overflow-hidden bg-black flex-shrink-0">
+            <img src="${v.thumbnail || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=300'}" class="w-full h-full object-cover">
+            <span class="absolute bottom-2 right-2 text-[9px] bg-black/80 px-1 font-mono rounded-sm">${v.duration}s</span>
+            ${watched ? '<span class="absolute inset-0 bg-black/60 flex items-center justify-center text-xs text-gaming-neonGreen font-bold font-gaming"><i class="fa-regular fa-circle-check mr-1"></i> PLAYED</span>' : ''}
+          </div>
+          <div class="flex-grow flex flex-col justify-between py-1">
+            <div>
+              <div class="flex justify-between items-center text-[10px] text-gaming-textMuted mb-1">
+                <span>Category: ${v.category}</span>
+                ${v.isSponsored ? '<span class="text-gaming-neonPink font-extrabold uppercase scale-90">Sponsored</span>' : ''}
+              </div>
+              <h3 class="text-xs font-bold leading-normal tracking-wide">${v.title}</h3>
+            </div>
+            
+            <div class="flex justify-between items-center mt-3 pt-2 border-t border-white/5">
+              <span class="text-[9px] text-gaming-textMuted flex items-center gap-1"><i class="fa-solid fa-clock"></i> watch ${v.duration}s rewards</span>
+              <div class="bg-gaming-neonGold/10 text-gaming-neonGold border border-gaming-neonGold/30 text-[10px] font-gaming font-bold px-2 py-1 rounded flex items-center gap-1.5">
+                <i class="fa-solid fa-coins animate-spin-slow"></i> +${v.reward} coins
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    function selectCategoryFilter(cat) {
+      const categories = ["All", "Gaming", "Music", "Crypto", "Entertainment", "Tech", "Sponsored"];
+      categories.forEach(c => {
+        document.getElementById(`cat-${c}`).className = `px-4 py-2 text-xs rounded-xl font-semibold border transition ${c === cat ? 'bg-gaming-primary border-gaming-primary text-black' : 'bg-gaming-card border-white/5 text-gaming-textMuted'}`;
+      });
+      activeFilterCategory = cat;
+      renderVideosScreen();
+    }
+
+    function filterVideos() {
+      const q = document.getElementById('video-search-input').value.toLowerCase().trim();
+      const list = document.getElementById('video-playlist');
+      const cards = list.children;
+
+      if (!q) {
+        renderVideosScreen();
+        return;
+      }
+
+      for (let i = 0; i < cards.length; i++) {
+        const title = cards[i].querySelector('h3');
+        if (title) {
+          if (title.textContent.toLowerCase().includes(q)) {
+            cards[i].classList.remove('hidden');
+          } else {
+            cards[i].classList.add('hidden');
+          }
+        }
+      }
+    }
+
+    // --- Daily Bonus Claim Handler ---
+    function claimDailyBonus() {
+      if (!currentUser) return;
+      const reward = 150;
+
+      if (isOfflineSandbox) {
+        const uMap = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
+        const uNode = uMap[currentUser.uid];
+        uNode.coins += reward;
+        uNode.lifetimeEarnings += reward;
+        uNode.lastDailyClaim = Date.now();
+        localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(uMap));
+        currentUser = uNode;
+        syncUILayout();
+        triggerJackpotCoinsShower();
+      } else {
+        database.ref('users/' + currentUser.uid).transaction(data => {
+          if (data) {
+            const now = Date.now();
+            if (now - (data.lastDailyClaim || 0) >= 86400000) {
+              data.coins = (data.coins || 0) + reward;
+              data.lifetimeEarnings = (data.lifetimeEarnings || 0) + reward;
+              data.lastDailyClaim = now;
+            }
+          }
+          return data;
+        }, (err, state, snap) => {
+          if (!err && state) {
+            triggerJackpotCoinsShower();
+          }
+        });
+      }
+    }
+
+    // --- Interactive Games: Spin Wheel & Scratch ---
+    function renderWheelSectors() {
+      const wheel = document.getElementById('wheel');
+      // clear dynamic paths
+      const paths = wheel.querySelectorAll('.wheel-part');
+      paths.forEach(p => p.remove());
+
+      const numSectors = 8;
+      const angle = 360 / numSectors;
+
+      for (let i = 0; i < numSectors; i++) {
+        const startAng = angle * i;
+        const endAng = angle * (i + 1);
+        
+        // svg path conversion params
+        const transform = `rotate(${startAng} 100 100)`;
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("class", "wheel-part transition duration-300 pointer-events-none");
+        
+        const d = describeSectorPath(100, 100, 91, 0, angle);
+        path.setAttribute("d", d);
+        path.setAttribute("fill", i % 2 === 0 ? '#0a0f1d' : '#141d33');
+        path.setAttribute("stroke", 'rgba(0, 242, 254, 0.4)');
+        path.setAttribute("stroke-width", "1");
+        path.setAttribute("transform", transform);
+
+        // Add text values
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", "100");
+        text.setAttribute("y", "35");
+        text.setAttribute("transform", `rotate(${startAng + angle/2} 100 100)`);
+        text.setAttribute("class", "font-gaming text-[9px] font-bold text-center select-none pointer-events-none");
+        text.setAttribute("fill", SPIN_AWARDS[i] === 0 ? '#ff007f' : '#ffffff');
+        text.setAttribute("text-anchor", "middle");
+        text.textContent = SPIN_AWARDS[i] === 0 ? "TRY" : SPIN_AWARDS[i];
+
+        wheel.appendChild(path);
+        wheel.appendChild(text);
+      }
+    }
+
+    function describeSectorPath(x, y, radius, startAngle, endAngle) {
+      const start = polarToCartesian(x, y, radius, endAngle);
+      const end = polarToCartesian(x, y, radius, startAngle);
+      const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+      return [
+        "M", x, y,
+        "L", start.x, start.y,
+        "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y,
+        "Z"
+      ].join(" ");
+    }
+
+    function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+      const angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
+      return {
+        x: centerX + (radius * Math.cos(angleInRadians)),
+        y: centerY + (radius * Math.sin(angleInRadians))
+      };
+    }
+
+    let isRotationActive = false;
+    function spinLuckyWheel() {
+      if (isRotationActive) return;
+      if (!currentUser) return;
+
+      const cost = 250;
+      if (currentUser.coins < cost) {
+        alert("You need at least 250 Coins to spin the Lucky Wheel.");
+        return;
+      }
+
+      isRotationActive = true;
+      document.getElementById('spin-status-msg').textContent = "Rolling slots...";
+      
+      // Determine win indices
+      const winIndex = Math.floor(Math.random() * SPIN_AWARDS.length);
+      const rotationDegrees = 3600 + (winIndex * 45) - (45/2); // rotating segments
+
+      const wheel = document.getElementById('wheel');
+      wheel.style.transform = `rotate(-${rotationDegrees}deg)`;
+
+      // Deduct spin cost immediately
+      if (isOfflineSandbox) {
+        const uMap = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
+        uMap[currentUser.uid].coins -= cost;
+        localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(uMap));
+        currentUser = uMap[currentUser.uid];
+        syncUILayout();
+      } else {
+        database.ref('users/' + currentUser.uid + '/coins').set(firebase.database.ServerValue.increment(-cost));
+      }
+
+      setTimeout(() => {
+        isRotationActive = false;
+        const prize = SPIN_AWARDS[winIndex];
+        
+        if (prize > 0) {
+          document.getElementById('spin-status-msg').innerHTML = `<span class="text-gaming-neonGreen font-bold font-gaming text-sm animate-bounce">CONGRATS! WON +${prize} COINS</span>`;
+          triggerJackpotCoinsShower();
+          
+          if (isOfflineSandbox) {
+            const uMap = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
+            uMap[currentUser.uid].coins += prize;
+            uMap[currentUser.uid].lifetimeEarnings += prize;
+            localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(uMap));
+            currentUser = uMap[currentUser.uid];
+            syncUILayout();
+          } else {
+            database.ref('users/' + currentUser.uid + '/coins').set(firebase.database.ServerValue.increment(prize));
+            database.ref('users/' + currentUser.uid + '/lifetimeEarnings').set(firebase.database.ServerValue.increment(prize));
+          }
+        } else {
+          document.getElementById('spin-status-msg').innerHTML = `<span class="text-gaming-neonPink font-semibold">Hard Luck! Spin again next turn.</span>`;
+        }
+
+        // Reset wheel placement rotation degree variables
+        setTimeout(() => {
+          wheel.style.transition = 'none';
+          wheel.style.transform = `rotate(0deg)`;
+          setTimeout(() => { wheel.style.transition = 'transform 4s cubic-bezier(0.1, 0.8, 0.1, 1)'; }, 50);
+        }, 3000);
+
+      }, 4000);
+    }
+
+    // --- Canvas Scratch Card element logic ---
+    function initScratchCardEngine() {
+      const container = document.querySelector('.scratch-container');
+      const canvas = document.getElementById('scratch-canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx || scratchCardState.initialized) return;
+
+      // Draw shiny silver masking overlay layer
+      ctx.fillStyle = '#1c2438';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.fillStyle = '#66fcf1';
+      ctx.font = 'bold 12px Orbitron';
+      ctx.textAlign = 'center';
+      ctx.fillText('SCRATCH PLATINUM BOX', canvas.width/2, canvas.height/2 - 10);
+      
+      ctx.fillStyle = '#8b9bb4';
+      ctx.font = '9px Poppins';
+      ctx.fillText('Move finger or cursor to scrape silver', canvas.width/2, canvas.height/2 + 15);
+
+      // Handle drawing lines
+      let drawing = false;
+
+      function getBrushPos(x, y) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: (x - rect.left) * (canvas.width / rect.width),
+          y: (y - rect.top) * (canvas.height / rect.height)
+        };
+      }
+
+      function scrapeMask(e) {
+        if (!drawing || scratchCardState.isClaimed) return;
+        const cl = e.touches ? e.touches[0] : e;
+        const pos = getBrushPos(cl.clientX, cl.clientY);
+
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, 16, 0, Math.PI * 2);
+        ctx.fill();
+
+        countScrapedArea();
+      }
+
+      canvas.addEventListener('mousedown', () => drawing = true);
+      canvas.addEventListener('touchstart', () => drawing = true);
+      window.addEventListener('mouseup', () => drawing = false);
+      window.addEventListener('touchend', () => drawing = false);
+
+      canvas.addEventListener('mousemove', scrapeMask);
+      canvas.addEventListener('touchmove', scrapeMask);
+
+      scratchCardState.initialized = true;
+      scratchCardState.isClaimed = false;
+      
+      // select potential prize
+      scratchCardState.prize = Math.floor(50 + Math.random() * 200);
+      document.getElementById('scratch-win-amt').textContent = `+${scratchCardState.prize} Coins`;
+    }
+
+    function countScrapedArea() {
+      if (scratchCardState.isClaimed) return;
+      const canvas = document.getElementById('scratch-canvas');
+      const ctx = canvas.getContext('2d');
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      
+      let blankPixels = 0;
+      const step = 40; // sampling steps (avoid loop lagging)
+      for (let i = 3; i < imgData.data.length; i += step) {
+        if (imgData.data[i] === 0) {
+          blankPixels += (step / 4);
+        }
+      }
+
+      const ratio = (blankPixels / (imgData.data.length / 4)) * 100;
+      if (ratio > 45) {
+        scratchCardState.isClaimed = true;
+        // Fade mask completely out
+        canvas.style.transition = 'opacity 0.5s ease-out';
+        canvas.style.opacity = '0';
+        
+        triggerJackpotCoinsShower();
+        awardScratchPrizeCoins(scratchCardState.prize);
+        
+        setTimeout(() => {
+          canvas.classList.add('hidden');
+          document.getElementById('reset-scratch-btn').classList.remove('hidden');
+        }, 500);
+      }
+    }
+
+    function awardScratchPrizeCoins(prize) {
+      if (isOfflineSandbox) {
+        const uMap = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
+        uMap[currentUser.uid].coins += prize;
+        uMap[currentUser.uid].lifetimeEarnings += prize;
+        localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(uMap));
+        currentUser = uMap[currentUser.uid];
+        syncUILayout();
+      } else {
+        database.ref('users/' + currentUser.uid + '/coins').set(firebase.database.ServerValue.increment(prize));
+        database.ref('users/' + currentUser.uid + '/lifetimeEarnings').set(firebase.database.ServerValue.increment(prize));
+      }
+    }
+
+    function resetScratchElement() {
+      const canvas = document.getElementById('scratch-canvas');
+      canvas.classList.remove('hidden');
+      canvas.style.opacity = '1';
+      document.getElementById('reset-scratch-btn').classList.add('hidden');
+      scratchCardState.initialized = false;
+      initScratchCardEngine();
+    }
+
+    // --- Missions Tracking Logic ---
+    function renderMissionsUI() {
+      const parent = document.getElementById('missions-list');
+      parent.innerHTML = "";
+
+      // Static mission goals setup
+      const missions = [
+        { id: "m_1", label: "Level One Player Launch", goal: 1, current: currentUser.level || 1, reward: 100, isLvlUp: true },
+        { id: "m_2", label: "Spin Lucky Wheel once", goal: 1, current: 1, reward: 50 },
+        { id: "m_3", label: "Earn 1000 Total Gold Coins", goal: 1000, current: currentUser.lifetimeEarnings || 500, reward: 500 }
+      ];
+
+      missions.forEach(m => {
+        const pCent = Math.min(((m.current / m.goal) * 100), 100).toFixed(0);
+        const el = document.createElement('div');
+        el.className = "bg-black/35 p-3 rounded-xl border border-white/5 space-y-1.5";
+        el.innerHTML = `
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-semibold text-white/90">${m.label}</span>
+            <span class="text-gaming-neonGold font-bold font-gaming">+${m.reward} COINS</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="flex-grow bg-black/50 h-2 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-gaming-neonPink to-pink-500 h-full rounded-full" style="width: ${pCent}%"></div>
+            </div>
+            <span class="text-[10px] text-gaming-textMuted font-mono shrink-0">${m.current}/${m.goal}</span>
+          </div>
+        `;
+        parent.appendChild(el);
+      });
+    }
+
+    // --- Earning YouTube Video Player Actions ---
+    function launchVideoGameplayPlayer(vId) {
+      const targetVideo = videosData[vId];
+      if (!targetVideo) return;
+
+      if (currentUser && currentUser.watchedVideos && currentUser.watchedVideos[vId]) {
+        // Warning dialog bypasses double earning blocking
+        const conf = confirm("You already watched this stream to earn coin tokens. Resume playback for gaming XP and fun?");
+        if (!conf) return;
+      }
+
+      currentWatchingVideoId = vId;
+      activeRewardSum = targetVideo.reward;
+      remainingWatchSeconds = targetVideo.duration;
+      totalRequiredWatchSeconds = targetVideo.duration;
+      expectedProgressPlaySec = 0;
+
+      // Update layout overlays in player popup modal
+      document.getElementById('player-time-countdown').textContent = `${remainingWatchSeconds}s`;
+      document.getElementById('player-reward-amt').textContent = `+${targetVideo.reward} Coins`;
+      document.getElementById('player-progress-bar').style.width = '0%';
+      document.getElementById('player-warning-msg').textContent = "Keep video playing to secure verification timer!";
+
+      document.getElementById('playing-video-modal').classList.remove('hidden');
+      document.getElementById('yt-unstarted-mask').classList.remove('hidden');
+
+      // Setup YT embedded state
+      setupYoutubePlayerVideo(targetVideo.youtubeId);
+    }
+
+    function setupYoutubePlayerVideo(ytId) {
+      if (ytPlayerInstance) {
+        try {
+          ytPlayerInstance.loadVideoById(ytId);
+          return;
+        } catch (err) {
+          console.error("Failed loading direct into current loader, re-instantiating:", err);
+        }
+      }
+
+      ytPlayerInstance = new YT.Player('yt-player-target', {
+        height: '100%',
+        width: '100%',
+        videoId: ytId,
+        playerVars: {
+          autoplay: 0,
+          controls: 1,
+          rel:0,
+          modestbranding: 1,
+          disablekb: 1, 
+          playsinline: 1
+        },
+        events: {
+          'onStateChange': onPlayerStateChangedEventTracker
+        }
+      });
+    }
+
+    function onPlayerStateChangedEventTracker(event) {
+      if (event.data === YT.PlayerState.PLAYING) {
+        document.getElementById('yt-unstarted-mask').classList.add('hidden');
+        triggerPlayTimerLoop(true);
+      } else {
+        triggerPlayTimerLoop(false);
+      }
+    }
+
+    function triggerPlayTimerLoop(active) {
+      if (watchTimeCountdownId) clearInterval(watchTimeCountdownId);
+      if (!active) {
+        document.getElementById('player-warning-msg').innerHTML = `<i class="fa-solid fa-triangle-exclamation animate-pulse"></i> STREAM PAUSED! Play video to resume timer.`;
+        return;
+      }
+
+      document.getElementById('player-warning-msg').innerHTML = `<i class="fa-solid fa-play text-gaming-primary animate-pulse"></i> Captcha verify ticking... Do not skip/mute!`;
+
+      watchTimeCountdownId = setInterval(() => {
+        // verify skipping timeline hack checker
+        const playerTime = ytPlayerInstance.getCurrentTime();
+        if (playerTime > expectedProgressPlaySec + 2.5) {
+          // Warning skip detection trigger resets back
+          alert("Fast forward bypass detected! Video tracking reset to current playback verification progress.");
+          ytPlayerInstance.seekTo(expectedProgressPlaySec);
+          return;
+        }
+
+        expectedProgressPlaySec = playerTime;
+        remainingWatchSeconds--;
+
+        // updating ring bars
+        const percentage = Math.floor(((totalRequiredWatchSeconds - remainingWatchSeconds) / totalRequiredWatchSeconds) * 100);
+        document.getElementById('player-time-countdown').textContent = `${remainingWatchSeconds}s`;
+        document.getElementById('player-progress-bar').style.width = percentage + '%';
+
+        if (remainingWatchSeconds <= 0) {
+          clearInterval(watchTimeCountdownId);
+          triggerEarningPlaybackCompletion();
+        }
+      }, 1000);
+    }
+
+    function triggerEarningPlaybackCompletion() {
+      // Pause active YouTube stream
+      if (ytPlayerInstance) {
+        try { ytPlayerInstance.pauseVideo(); } catch (er) {}
+      }
+
+      // Add user balance rewards
+      if (isOfflineSandbox) {
+        const uMap = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
+        const userNode = uMap[currentUser.uid];
+        userNode.coins += activeRewardSum;
+        userNode.lifetimeEarnings += activeRewardSum;
+        userNode.todayEarnings += activeRewardSum;
+        userNode.xp += 100 + (activeRewardSum / 5); // gain XP relative to video complexity
+
+        // Levelling check bounds
+        const neededXP = userNode.level * 1000;
+        if (userNode.xp >= neededXP) {
+          userNode.xp -= neededXP;
+          userNode.level++;
+          alert(`🏆 CONGRATS! You levelled up to LEVEL ${userNode.level}! +500 Coins added!`);
+          userNode.coins += 500;
+          userNode.lifetimeEarnings += 500;
+        }
+
+        // assign watched list log
+        if (!userNode.watchedVideos) userNode.watchedVideos = {};
+        userNode.watchedVideos[currentWatchingVideoId] = true;
+
+        localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(uMap));
+        currentUser = userNode;
+        syncUILayout();
+      } else {
+        // Firebase Transaction Update
+        database.ref('users/' + currentUser.uid).transaction(node => {
+          if (node) {
+            node.coins = (node.coins || 0) + activeRewardSum;
+            node.lifetimeEarnings = (node.lifetimeEarnings || 0) + activeRewardSum;
+            node.todayEarnings = (node.todayEarnings || 0) + activeRewardSum;
+            node.xp = (node.xp || 0) + 100 + (activeRewardSum / 5);
+
+            const levelTarget = node.level * 1000;
+            if (node.xp >= levelTarget) {
+              node.xp -= levelTarget;
+              node.level = (node.level || 1) + 1;
+              node.coins += 500;
+              node.lifetimeEarnings += 500;
+            }
+
+            if (!node.watchedVideos) node.watchedVideos = {};
+            node.watchedVideos[currentWatchingVideoId] = true;
+          }
+          return node;
+        });
+      }
+
+      triggerJackpotCoinsShower();
+      alert(`🎉 YOU COMPLETED THE TASK! +${activeRewardSum} Coins added successfully!`);
+      closeActiveVideoPopup();
+    }
+
+    function closeActiveVideoPopup() {
+      if (watchTimeCountdownId) clearInterval(watchTimeCountdownId);
+      if (ytPlayerInstance) {
+        try { ytPlayerInstance.stopVideo(); } catch (e) {}
+      }
+      document.getElementById('playing-video-modal').classList.add('hidden');
+      renderVideosScreen();
+    }
+
+    // --- Cash and Withdrawal Request Submission ---
+    function updateCoinsEst() {
+      const fieldVal = parseFloat(document.getElementById('withdraw-coin-input').value) || 0;
+      const rate = siteSettings.coinToCurrencyRate || 1000;
+      const sym = siteSettings.currencySymbol || "Rs.";
+      document.getElementById('est-currency-receive').textContent = `${sym} ${(fieldVal / rate).toFixed(2)}`;
+    }
+
+    function submitWithdrawPayload() {
+      if (!currentUser) return;
+      const upiId = document.getElementById('upi-address').value.trim();
+      const amountCoins = parseInt(document.getElementById('withdraw-coin-input').value) || 0;
+
+      if (!upiId) {
+        alert("Verify UPI/Wallet address format is correct before cashout!");
+        return;
+      }
+
+      if (amountCoins < (siteSettings.minWithdrawal || 1000)) {
+        alert(`Minimum withdrawal value allowed is ${siteSettings.minWithdrawal || 1000} Coins.`);
+        return;
+      }
+
+      if (currentUser.coins < amountCoins) {
+        alert("Inadequate coins current balance to submit cashout!");
+        return;
+      }
+
+      // Payload building
+      const txPayload = {
+        id: "tx_" + Date.now(),
+        uid: currentUser.uid,
+        username: currentUser.username,
+        upiId: upiId,
+        amount: amountCoins,
+        status: "pending",
+        timestamp: Date.now(),
+        note: `Redemption for ${amountCoins} coins`
+      };
+
+      if (isOfflineSandbox) {
+        // deduct local
+        const uMap = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
+        const node = uMap[currentUser.uid];
+        node.coins -= amountCoins;
+        localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(uMap));
+
+        // insert tx
+        const txList = JSON.parse(localStorage.getItem('W&E_SANDBOX_WITHDRAWALS'));
+        txList.push(txPayload);
+        localStorage.setItem('W&E_SANDBOX_WITHDRAWALS', JSON.stringify(txList));
+
+        currentUser = node;
+        syncUILayout();
+        alert("Withdrawal request created successfully (Sandbox)!");
+      } else {
+        database.ref('users/' + currentUser.uid + '/coins').set(firebase.database.ServerValue.increment(-amountCoins))
+          .then(() => {
+            database.ref('withdrawals/' + txPayload.id).set(txPayload);
+            alert("Instant UPI withdrawal request submitted successfully! Pending admin clearance.");
+          });
+      }
+
+      // clear fields
+      document.getElementById('withdraw-coin-input').value = 1000;
+      updateCoinsEst();
+    }
+
+    function renderWithdrawLogsHistory() {
+      const list = document.getElementById('tx-log-list');
+      list.innerHTML = "";
+
+      let myTx = [];
+      if (isOfflineSandbox) {
+        const full = JSON.parse(localStorage.getItem('W&E_SANDBOX_WITHDRAWALS'));
+        myTx = full.filter(t => t.uid === currentUser.uid);
+      }
+
+      // Sort chronological descending
+      myTx.sort((a,b) => b.timestamp - a.timestamp);
+
+      if (myTx.length === 0) {
+        list.innerHTML = `<p class="text-xs text-gaming-textMuted py-4 text-center">No withdraw logs found under profile yet.</p>`;
+        return;
+      }
+
+      myTx.forEach(tx => {
+        const colorMap = { pending: 'text-gaming-neonGold bg-gaming-neonGold/10 border-gaming-neonGold/30', approved: 'text-gaming-neonGreen bg-gaming-neonGreen/10 border-gaming-neonGreen/30', rejected: 'text-gaming-neonPink bg-gaming-[#ff007f]/10 border-gaming-[#ff007f]/30' };
+        
+        const row = document.createElement('div');
+        row.className = "bg-gaming-card p-3 rounded-xl border border-white/5 flex items-center justify-between text-xs";
+        row.innerHTML = `
+          <div>
+            <div class="font-semibold text-white/90">${tx.upiId}</div>
+            <div class="text-[9px] text-gaming-textMuted mt-1">${new Date(tx.timestamp).toLocaleString()}</div>
+          </div>
+          <div class="text-right">
+            <span class="font-gaming font-bold text-gaming-neonGold block">${tx.amount} Coins</span>
+            <span class="text-[9px] uppercase px-1.5 py-0.5 rounded border inline-block mt-1 font-extrabold ${colorMap[tx.status]}">${tx.status}</span>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    // --- User Help Tickets Log Module ---
+    function submitContactTicket() {
+      if (!currentUser) return;
+      const msg = document.getElementById('support-text').value.trim();
+      if (!msg) {
+        alert("Provide problem info before submitting support request!");
+        return;
+      }
+
+      const ticketPayload = {
+        id: "t_" + Date.now(),
+        uid: currentUser.uid,
+        username: currentUser.username,
+        message: msg,
+        reply: "No reply from admin representative yet.",
+        timestamp: Date.now(),
+        status: "open"
+      };
+
+      if (isOfflineSandbox) {
+        const currentTickets = JSON.parse(localStorage.getItem('W&E_SANDBOX_TICKETS'));
+        currentTickets.push(ticketPayload);
+        localStorage.setItem('W&E_SANDBOX_TICKETS', JSON.stringify(currentTickets));
+        alert("Platform support ticket sent to active desk queue!");
+        syncUILayout();
+      } else {
+        database.ref('supportTickets/' + ticketPayload.id).set(ticketPayload)
+          .then(() => alert("Help and support message recorded! Admin reply shifts back soon."));
+      }
+
+      document.getElementById('support-text').value = "";
+    }
+
+    function renderContactSupportLogs() {
+      const cont = document.getElementById('u-support-history');
+      cont.innerHTML = "";
+
+      let myTickets = [];
+      if (isOfflineSandbox) {
+        const items = JSON.parse(localStorage.getItem('W&E_SANDBOX_TICKETS'));
+        myTickets = items.filter(t => t.uid === currentUser.uid);
+      }
+
+      myTickets.sort((a,b) => b.timestamp - a.timestamp);
+
+      if (myTickets.length === 0) {
+        cont.innerHTML = `<p class="text-[10px] text-gaming-textMuted py-2 text-center">Empty tickets ledger folder.</p>`;
+        return;
+      }
+
+      myTickets.forEach(t => {
+        const card = document.createElement('div');
+        card.className = "bg-black/30 p-2.5 rounded-lg border border-white/5 space-y-1.5 text-[10px]";
+        card.innerHTML = `
+          <div class="flex justify-between text-[9px] text-gaming-textMuted border-b border-white/5 pb-1">
+            <span>Ticket: ${t.id}</span>
+            <span class="font-bold text-gaming-secondary uppercase">${t.status}</span>
+          </div>
+          <p class="text-white/80"><span class="font-bold text-gaming-primary">Me:</span> ${t.message}</p>
+          <p class="text-gaming-neonGold italic"><span class="font-bold text-gaming-primary block">Admin:</span> ${t.reply}</p>
+        `;
+        cont.appendChild(card);
+      });
+    }
+
+    // --- In-App Legal Policies Dialog Open Actions ---
+    function openLegalPolicy(key) {
+      const titles = { privacy: "Privacy Policy Document", terms: "Platform Terms & Rules", faq: "Help Desk FAQ Hub", copyright: "Copyright DMCA Disclaimers" };
+      document.getElementById('legal-title').textContent = titles[key];
+      document.getElementById('legal-content').innerHTML = LEGAL_DICTS[key] || "Policy contents undergoing revisions.";
+      document.getElementById('legal-policy-modal').classList.remove('hidden');
+    }
+    function closeLegalModal() {
+      document.getElementById('legal-policy-modal').classList.add('hidden');
+    }
+
+    // --- Account Reset/Delete safety trigger ---
+    function triggerAccountDelete() {
+      const c = confirm("CRITICAL WARN: Do you completely intend to wipe all coins balance, watch track records, and referrals statistics?");
+      if (!c) return;
+      const c2 = confirm("DOUBLE VERIFICATION: This operation is permanent! Type your consent details to proceed.");
+      if (!c2) return;
+
+      if (isOfflineSandbox) {
+        const uMap = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
+        delete uMap[currentUser.uid];
+        localStorage.setItem('W&E_SANDBOX_USERS', JSON.stringify(uMap));
+        logoutSession();
+      } else {
+        database.ref('users/' + currentUser.uid).remove()
+          .then(() => logoutSession());
+      }
+    }
+
+    // --- Visual animations: Canvas Confetti coin splashes ---
+    function triggerJackpotCoinsShower() {
+      try {
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.75 },
+          colors: ['#ffd700', '#ff007f', '#00f2fe']
+        });
+      } catch (err) {
+        // Fallback standard coin particles
+        for (let i = 0; i < 20; i++) {
+          const coin = document.createElement('div');
+          coin.className = "floating-coin fa-solid fa-circle-dollar-to-slot text-2xl duration-300";
+          coin.style.left = Math.random() * 100 + "vw";
+          coin.style.animationDelay = (Math.random() * 1.5) + "s";
+          document.body.appendChild(coin);
+          setTimeout(() => { coin.remove(); }, 3000);
+        }
+      }
+    }
+
+    // Hook tab-specific canvas initialization
+    function copyReferralCode() {
+      const val = document.getElementById('ref-code-display').value;
+      navigator.clipboard.writeText(val);
+      alert("Referral invitation pin link copied to clipboard!");
+    }
+
+    function toggleAnnouncements() {
+      openLegalPolicy('faq');
+    }
+
+    // Sector path drawing wheel
+    renderWheelSectors();
+    initScratchCardEngine();
+  </script>
+</body>
+</html>
