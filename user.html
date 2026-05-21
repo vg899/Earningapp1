@@ -88,14 +88,14 @@
       <div>
         <label class="text-xs text-gaming-textMuted block mb-1.5">Email / Phone</label>
         <div class="relative"><i class="fa-solid fa-envelope absolute left-3 top-3.5 text-white/30 text-sm"></i>
-          <input id="login-email" type="email" placeholder="gamer@google.com" value="gamer@gmail.com" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 outline-none text-sm focus:border-gaming-primary transition"></div>
+          <input id="login-email" type="email" placeholder="harshvardhantiwari@gmail.com" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 outline-none text-sm focus:border-gaming-primary transition"></div>
       </div>
       <div>
         <label class="text-xs text-gaming-textMuted block mb-1.5">Password</label>
         <div class="relative"><i class="fa-solid fa-key absolute left-3 top-3.5 text-white/30 text-sm"></i>
-          <input id="login-pwd" type="password" placeholder="••••••••" value="123456" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 outline-none text-sm focus:border-gaming-primary transition"></div>
+          <input id="login-pwd" type="password" placeholder="••••••••" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 outline-none text-sm focus:border-gaming-primary transition"></div>
       </div>
-      <button onclick="handleLogin()" class="w-full py-4 rounded-xl font-gaming tracking-wide text-sm font-bold bg-gradient-to-r from-gaming-primary to-gaming-secondary text-black shadow-lg shadow-gaming-primary/20 hover:neon-border transition active:scale-95">LOG IN TO PLAY</button>
+      <button id="login-btn" onclick="handleLogin()" class="w-full py-4 rounded-xl font-gaming tracking-wide text-sm font-bold bg-gradient-to-r from-gaming-primary to-gaming-secondary text-black shadow-lg shadow-gaming-primary/20 hover:neon-border transition active:scale-95">LOG IN TO PLAY</button>
       <p class="text-center text-xs text-gaming-textMuted">Don't have an account? <span onclick="toggleAuthForm(false)" class="text-gaming-primary font-semibold underline cursor-pointer">Register Free</span></p>
     </div>
 
@@ -105,12 +105,12 @@
       <div>
         <label class="text-xs text-gaming-textMuted block mb-1.5">Username</label>
         <div class="relative"><i class="fa-solid fa-user-ninja absolute left-3 top-3.5 text-white/30 text-sm"></i>
-          <input id="reg-name" type="text" placeholder="NinjaGamer" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 outline-none text-sm focus:border-gaming-secondary transition"></div>
+          <input id="reg-name" type="text" placeholder="harshvardhan tiwari" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 outline-none text-sm focus:border-gaming-secondary transition"></div>
       </div>
       <div>
         <label class="text-xs text-gaming-textMuted block mb-1.5">Email Address</label>
         <div class="relative"><i class="fa-solid fa-envelope absolute left-3 top-3.5 text-white/30 text-sm"></i>
-          <input id="reg-email" type="email" placeholder="ninja@world.com" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 outline-none text-sm focus:border-gaming-secondary transition"></div>
+          <input id="reg-email" type="email" placeholder="harshvardhantiwari@gmail.com" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 outline-none text-sm focus:border-gaming-secondary transition"></div>
       </div>
       <div>
         <label class="text-xs text-gaming-textMuted block mb-1.5">Credentials (6+ characters)</label>
@@ -122,7 +122,7 @@
         <div class="relative"><i class="fa-solid fa-gift absolute left-3 top-3.5 text-white/30 text-sm"></i>
           <input id="reg-ref" type="text" placeholder="WE-12345" class="w-full bg-black/40 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 outline-none text-sm focus:border-gaming-secondary transition"></div>
       </div>
-      <button onclick="handleRegister()" class="w-full py-4 rounded-xl font-gaming tracking-wide text-sm font-bold bg-gradient-to-r from-gaming-primary to-gaming-secondary text-black hover:neon-border transition active:scale-95">SIGN UP NOW (+500 Coins)</button>
+      <button id="register-btn" onclick="handleRegister()" class="w-full py-4 rounded-xl font-gaming tracking-wide text-sm font-bold bg-gradient-to-r from-gaming-primary to-gaming-secondary text-black hover:neon-border transition active:scale-95">SIGN UP NOW (+500 Coins)</button>
       <p class="text-center text-xs text-gaming-textMuted">Already a member? <span onclick="toggleAuthForm(true)" class="text-gaming-primary font-semibold underline cursor-pointer">Log In</span></p>
     </div>
   </div>
@@ -138,7 +138,7 @@
         </div>
         <div>
           <div class="flex items-center gap-1.5">
-            <h4 id="u-username" class="text-sm font-semibold tracking-wide">Player_One</h4>
+            <h4 id="u-username" class="text-sm font-semibold tracking-wide">Harshvardhan Tiwari</h4>
             <span id="u-vip-badge" class="hidden text-[10px] bg-red-600/20 text-red-500 border border-red-500/30 px-1 rounded-sm font-extrabold uppercase scale-90">VIP</span>
           </div>
           <div class="flex items-center gap-1 text-[10px] text-gaming-textMuted">
@@ -861,6 +861,34 @@
     }
 
     // --- Authentication Actions ---
+    function setLoginLoading(isLoading) {
+      const btn = document.getElementById('login-btn');
+      if (!btn) return;
+      if (isLoading) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> SIGNING IN...`;
+        btn.classList.add('opacity-75');
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = `LOG IN TO PLAY`;
+        btn.classList.remove('opacity-75');
+      }
+    }
+
+    function setRegisterLoading(isLoading) {
+      const btn = document.getElementById('register-btn');
+      if (!btn) return;
+      if (isLoading) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> CREATING ACCOUNT...`;
+        btn.classList.add('opacity-75');
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = `SIGN UP NOW (+500 Coins)`;
+        btn.classList.remove('opacity-75');
+      }
+    }
+
     function handleLogin() {
       const email = document.getElementById('login-email').value.trim();
       const password = document.getElementById('login-pwd').value.trim();
@@ -869,6 +897,8 @@
         alert("Insert both credentials fully!");
         return;
       }
+
+      setLoginLoading(true);
 
       if (isOfflineSandbox) {
         const uMap = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
@@ -881,6 +911,7 @@
           localStorage.setItem('W&E_ACTIVE_USER_SESSION', matchedUid);
           currentUser = uMap[matchedUid];
           syncUILayout();
+          setLoginLoading(false);
         } else {
           // If fresh sandbox start, auto create profile for test instant log
           const newSandboxUid = "demo_u_" + Date.now();
@@ -896,10 +927,17 @@
           localStorage.setItem('W&E_ACTIVE_USER_SESSION', newSandboxUid);
           currentUser = freshUserObj;
           syncUILayout();
+          setLoginLoading(false);
         }
       } else {
         auth.signInWithEmailAndPassword(email, password)
-          .catch(err => alert("Login Credential Error: " + err.message));
+          .then(() => {
+            setLoginLoading(false);
+          })
+          .catch(err => {
+            alert("Login Credential Error: " + err.message);
+            setLoginLoading(false);
+          });
       }
     }
 
@@ -914,10 +952,16 @@
         return;
       }
 
+      setRegisterLoading(true);
+
       if (isOfflineSandbox) {
         const uMap = JSON.parse(localStorage.getItem('W&E_SANDBOX_USERS'));
         for (let key in uMap) {
-          if (uMap[key].email === email) { alert("Registered profile email exists!"); return;}
+          if (uMap[key].email === email) { 
+            alert("Registered profile email exists!"); 
+            setRegisterLoading(false);
+            return;
+          }
         }
 
         const newSandboxUid = "demo_u_" + Date.now();
@@ -944,6 +988,7 @@
         localStorage.setItem('W&E_ACTIVE_USER_SESSION', newSandboxUid);
         currentUser = freshUserObj;
         syncUILayout();
+        setRegisterLoading(false);
       } else {
         auth.createUserWithEmailAndPassword(email, pwd)
           .then(cred => {
@@ -966,9 +1011,14 @@
               });
             }
 
-            database.ref('users/' + cred.user.uid).set(refDetails);
+            database.ref('users/' + cred.user.uid).set(refDetails).then(() => {
+              setRegisterLoading(false);
+            });
           })
-          .catch(err => alert("Sign up error: " + err.message));
+          .catch(err => {
+            alert("Sign up error: " + err.message);
+            setRegisterLoading(false);
+          });
       }
     }
 
